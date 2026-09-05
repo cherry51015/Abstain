@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: abstain
+      POSTGRES_USER: abstain
+      POSTGRES_PASSWORD: abstain
+    volumes:
+      - abstain_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abstain -d abstain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    env_file:
+      - .env
+    environment:
+      # Overrides whatever DB_URL is in .env — .env's DB_URL is for running
+      # main.py directly on the host (SQLite default); inside compose, the
+      # app always talks to the 'db' service by its container hostname.
+      DB_URL: postgresql://abstain:abstain@db:5432/abstain
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  abstain_pgdata:

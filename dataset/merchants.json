@@ -1,0 +1,98 @@
+[
+  {
+    "merchant_id": "mch_01",
+    "name": "Apex Electronics",
+    "industry": "Electronics",
+    "tier": "Enterprise",
+    "historical_win_rate": 0.62,
+    "dispute_volume_90d": 340,
+    "current_chargeback_rate_pct": 0.35,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 650,
+    "risk_tolerance": "aggressive"
+  },
+  {
+    "merchant_id": "mch_02",
+    "name": "Lumina Boutique",
+    "industry": "Fashion",
+    "tier": "SMB",
+    "historical_win_rate": 0.41,
+    "dispute_volume_90d": 210,
+    "current_chargeback_rate_pct": 0.82,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 900,
+    "risk_tolerance": "conservative"
+  },
+  {
+    "merchant_id": "mch_03",
+    "name": "Northbridge SaaS",
+    "industry": "Software/Subscription",
+    "tier": "Mid-Market",
+    "historical_win_rate": 0.71,
+    "dispute_volume_90d": 95,
+    "current_chargeback_rate_pct": 0.22,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 500,
+    "risk_tolerance": "aggressive"
+  },
+  {
+    "merchant_id": "mch_04",
+    "name": "Curio Home Decor",
+    "industry": "Home Goods",
+    "tier": "SMB",
+    "historical_win_rate": 0.38,
+    "dispute_volume_90d": 180,
+    "current_chargeback_rate_pct": 0.88,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 850,
+    "risk_tolerance": "conservative"
+  },
+  {
+    "merchant_id": "mch_05",
+    "name": "Vantage Fitness Gear",
+    "industry": "Sports/Fitness",
+    "tier": "Mid-Market",
+    "historical_win_rate": 0.55,
+    "dispute_volume_90d": 150,
+    "current_chargeback_rate_pct": 0.55,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 700,
+    "risk_tolerance": "moderate"
+  },
+  {
+    "merchant_id": "mch_06",
+    "name": "Zenith Digital Courses",
+    "industry": "EdTech/Digital Goods",
+    "tier": "SMB",
+    "historical_win_rate": 0.29,
+    "dispute_volume_90d": 260,
+    "current_chargeback_rate_pct": 0.95,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 400,
+    "risk_tolerance": "conservative"
+  },
+  {
+    "merchant_id": "mch_07",
+    "name": "Ferro Industrial Supplies",
+    "industry": "B2B/Industrial",
+    "tier": "Enterprise",
+    "historical_win_rate": 0.78,
+    "dispute_volume_90d": 40,
+    "current_chargeback_rate_pct": 0.1,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 1200,
+    "risk_tolerance": "aggressive"
+  },
+  {
+    "merchant_id": "mch_08",
+    "name": "Pinnacle Mobile Accessories",
+    "industry": "Electronics",
+    "tier": "SMB",
+    "historical_win_rate": 0.47,
+    "dispute_volume_90d": 300,
+    "current_chargeback_rate_pct": 0.7,
+    "network_threshold_pct": 0.9,
+    "ops_cost_per_contest_inr": 600,
+    "risk_tolerance": "moderate"
+  }
+]

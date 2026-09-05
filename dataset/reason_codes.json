@@ -1,0 +1,66 @@
+[
+  {
+    "code": "13.1",
+    "network": "Visa",
+    "label": "Merchandise/Services Not Received",
+    "required_evidence": ["delivery_proof", "tracking_number", "customer_communication_log"],
+    "base_win_rate_range": [0.55, 0.75],
+    "notes": "Strong evidence category if delivery proof exists; weak if merchant relies on estimated delivery windows only."
+  },
+  {
+    "code": "12.5",
+    "network": "Visa",
+    "label": "Incorrect Transaction Amount",
+    "required_evidence": ["signed_receipt", "terms_acceptance"],
+    "base_win_rate_range": [0.65, 0.85],
+    "notes": "Usually clerical; high win rate if itemized receipt matches charged amount."
+  },
+  {
+    "code": "10.4",
+    "network": "Visa",
+    "label": "Other Fraud - Card-Absent Environment",
+    "required_evidence": ["auth_data", "ip_geolocation", "customer_communication_log", "delivery_proof"],
+    "base_win_rate_range": [0.20, 0.45],
+    "notes": "Hard category. AVS/CVV match alone rarely wins; needs corroborating behavioral evidence."
+  },
+  {
+    "code": "4853",
+    "network": "Mastercard",
+    "label": "Cardholder Dispute - Defective/Not as Described",
+    "required_evidence": ["product_description_match", "customer_communication_log", "return_policy_acceptance"],
+    "base_win_rate_range": [0.35, 0.55],
+    "notes": "Subjective category; outcome heavily depends on communication log tone/content, hard to fully automate confidence."
+  },
+  {
+    "code": "4837",
+    "network": "Mastercard",
+    "label": "No Cardholder Authorization",
+    "required_evidence": ["auth_data", "device_fingerprint", "ip_geolocation"],
+    "base_win_rate_range": [0.15, 0.35],
+    "notes": "Among the hardest to win without 3DS/step-up authentication evidence."
+  },
+  {
+    "code": "C08",
+    "network": "Amex",
+    "label": "Goods/Services Not Received",
+    "required_evidence": ["delivery_proof", "tracking_number"],
+    "base_win_rate_range": [0.50, 0.70],
+    "notes": "Similar profile to Visa 13.1."
+  },
+  {
+    "code": "F29",
+    "network": "Amex",
+    "label": "Card Not Present - Fraud",
+    "required_evidence": ["auth_data", "ip_geolocation", "device_fingerprint"],
+    "base_win_rate_range": [0.20, 0.40],
+    "notes": "Behavioral/device evidence matters more than transaction data alone."
+  },
+  {
+    "code": "13.3",
+    "network": "Visa",
+    "label": "Not as Described / Defective Merchandise",
+    "required_evidence": ["product_description_match", "return_policy_acceptance", "customer_communication_log"],
+    "base_win_rate_range": [0.30, 0.50],
+    "notes": "Frequently subjective; evidence strength varies a lot case to case."
+  }
+]

@@ -1,0 +1,1231 @@
+[
+  {
+    "case_id": "case_0001",
+    "merchant_id": "mch_05",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "customer_communication_log"
+    ],
+    "missing_evidence": [
+      "delivery_proof",
+      "tracking_number"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.521,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0002",
+    "merchant_id": "mch_07",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 250,
+    "evidence_present": [],
+    "missing_evidence": [
+      "signed_receipt",
+      "terms_acceptance"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.582,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0003",
+    "merchant_id": "mch_04",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 45000,
+    "evidence_present": [
+      "delivery_proof",
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.672,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0004",
+    "merchant_id": "mch_03",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 6000,
+    "evidence_present": [
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "tracking_number",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.548,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0005",
+    "merchant_id": "mch_02",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 6000,
+    "evidence_present": [],
+    "missing_evidence": [
+      "signed_receipt",
+      "terms_acceptance"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.733,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0006",
+    "merchant_id": "mch_08",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "delivery_proof",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.515,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0007",
+    "merchant_id": "mch_04",
+    "reason_code": "C08",
+    "network": "Amex",
+    "dispute_amount_inr": 500,
+    "evidence_present": [],
+    "missing_evidence": [
+      "delivery_proof",
+      "tracking_number"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.435,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0008",
+    "merchant_id": "mch_04",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 500,
+    "evidence_present": [
+      "terms_acceptance"
+    ],
+    "missing_evidence": [
+      "signed_receipt"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.783,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0009",
+    "merchant_id": "mch_06",
+    "reason_code": "C08",
+    "network": "Amex",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "tracking_number"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.626,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0010",
+    "merchant_id": "mch_03",
+    "reason_code": "4853",
+    "network": "Mastercard",
+    "dispute_amount_inr": 9500,
+    "evidence_present": [
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [
+      "product_description_match",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.461,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0011",
+    "merchant_id": "mch_01",
+    "reason_code": "C08",
+    "network": "Amex",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "delivery_proof",
+      "tracking_number"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.644,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0012",
+    "merchant_id": "mch_04",
+    "reason_code": "C08",
+    "network": "Amex",
+    "dispute_amount_inr": 45000,
+    "evidence_present": [
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "delivery_proof"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.514,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0013",
+    "merchant_id": "mch_07",
+    "reason_code": "4837",
+    "network": "Mastercard",
+    "dispute_amount_inr": 22000,
+    "evidence_present": [
+      "auth_data"
+    ],
+    "missing_evidence": [
+      "device_fingerprint",
+      "ip_geolocation"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.335,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0014",
+    "merchant_id": "mch_02",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 250,
+    "evidence_present": [
+      "customer_communication_log",
+      "product_description_match",
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.523,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0015",
+    "merchant_id": "mch_05",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "customer_communication_log",
+      "product_description_match",
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.564,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0016",
+    "merchant_id": "mch_07",
+    "reason_code": "4837",
+    "network": "Mastercard",
+    "dispute_amount_inr": 900,
+    "evidence_present": [
+      "device_fingerprint",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [
+      "auth_data"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.397,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0017",
+    "merchant_id": "mch_05",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 45000,
+    "evidence_present": [
+      "signed_receipt"
+    ],
+    "missing_evidence": [
+      "terms_acceptance"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.667,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0018",
+    "merchant_id": "mch_06",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 9500,
+    "evidence_present": [],
+    "missing_evidence": [
+      "delivery_proof",
+      "tracking_number",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.653,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0019",
+    "merchant_id": "mch_04",
+    "reason_code": "4837",
+    "network": "Mastercard",
+    "dispute_amount_inr": 250,
+    "evidence_present": [
+      "ip_geolocation"
+    ],
+    "missing_evidence": [
+      "auth_data",
+      "device_fingerprint"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.323,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0020",
+    "merchant_id": "mch_02",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "product_description_match",
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.541,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0021",
+    "merchant_id": "mch_04",
+    "reason_code": "F29",
+    "network": "Amex",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "auth_data",
+      "device_fingerprint"
+    ],
+    "missing_evidence": [
+      "ip_geolocation"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.385,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0022",
+    "merchant_id": "mch_08",
+    "reason_code": "C08",
+    "network": "Amex",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "tracking_number"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.534,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0023",
+    "merchant_id": "mch_04",
+    "reason_code": "4853",
+    "network": "Mastercard",
+    "dispute_amount_inr": 250,
+    "evidence_present": [],
+    "missing_evidence": [
+      "product_description_match",
+      "customer_communication_log",
+      "return_policy_acceptance"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.381,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0024",
+    "merchant_id": "mch_06",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 500,
+    "evidence_present": [
+      "customer_communication_log",
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "delivery_proof"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.615,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0025",
+    "merchant_id": "mch_04",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 9500,
+    "evidence_present": [
+      "customer_communication_log",
+      "product_description_match"
+    ],
+    "missing_evidence": [
+      "return_policy_acceptance"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.337,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0026",
+    "merchant_id": "mch_07",
+    "reason_code": "F29",
+    "network": "Amex",
+    "dispute_amount_inr": 9500,
+    "evidence_present": [
+      "auth_data",
+      "device_fingerprint",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.377,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0027",
+    "merchant_id": "mch_04",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "terms_acceptance"
+    ],
+    "missing_evidence": [
+      "signed_receipt"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.664,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0028",
+    "merchant_id": "mch_04",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 500,
+    "evidence_present": [
+      "customer_communication_log"
+    ],
+    "missing_evidence": [
+      "product_description_match",
+      "return_policy_acceptance"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.269,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0029",
+    "merchant_id": "mch_02",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "delivery_proof",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.612,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0030",
+    "merchant_id": "mch_03",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 6000,
+    "evidence_present": [],
+    "missing_evidence": [
+      "delivery_proof",
+      "tracking_number",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.524,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0031",
+    "merchant_id": "mch_05",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 6000,
+    "evidence_present": [
+      "customer_communication_log",
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [
+      "product_description_match"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.351,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0032",
+    "merchant_id": "mch_01",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 3800,
+    "evidence_present": [],
+    "missing_evidence": [
+      "delivery_proof",
+      "tracking_number",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.57,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0033",
+    "merchant_id": "mch_01",
+    "reason_code": "10.4",
+    "network": "Visa",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "ip_geolocation"
+    ],
+    "missing_evidence": [
+      "auth_data",
+      "customer_communication_log",
+      "delivery_proof"
+    ],
+    "evidence_completeness_score": 0.25,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.159,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0034",
+    "merchant_id": "mch_07",
+    "reason_code": "4853",
+    "network": "Mastercard",
+    "dispute_amount_inr": 500,
+    "evidence_present": [
+      "customer_communication_log",
+      "product_description_match",
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.579,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0035",
+    "merchant_id": "mch_05",
+    "reason_code": "C08",
+    "network": "Amex",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "delivery_proof"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.537,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0036",
+    "merchant_id": "mch_08",
+    "reason_code": "4837",
+    "network": "Mastercard",
+    "dispute_amount_inr": 3800,
+    "evidence_present": [
+      "auth_data",
+      "device_fingerprint",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.379,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0037",
+    "merchant_id": "mch_02",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 15000,
+    "evidence_present": [
+      "terms_acceptance"
+    ],
+    "missing_evidence": [
+      "signed_receipt"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.662,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0038",
+    "merchant_id": "mch_04",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 3800,
+    "evidence_present": [
+      "terms_acceptance"
+    ],
+    "missing_evidence": [
+      "signed_receipt"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.83,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0039",
+    "merchant_id": "mch_05",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 45000,
+    "evidence_present": [
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "tracking_number",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.559,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0040",
+    "merchant_id": "mch_05",
+    "reason_code": "10.4",
+    "network": "Visa",
+    "dispute_amount_inr": 2200,
+    "evidence_present": [
+      "auth_data",
+      "customer_communication_log",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [
+      "delivery_proof"
+    ],
+    "evidence_completeness_score": 0.75,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.389,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0041",
+    "merchant_id": "mch_02",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 45000,
+    "evidence_present": [
+      "tracking_number"
+    ],
+    "missing_evidence": [
+      "delivery_proof",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.507,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0042",
+    "merchant_id": "mch_05",
+    "reason_code": "10.4",
+    "network": "Visa",
+    "dispute_amount_inr": 900,
+    "evidence_present": [
+      "auth_data",
+      "customer_communication_log",
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "ip_geolocation"
+    ],
+    "evidence_completeness_score": 0.75,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.294,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0043",
+    "merchant_id": "mch_01",
+    "reason_code": "10.4",
+    "network": "Visa",
+    "dispute_amount_inr": 3800,
+    "evidence_present": [
+      "delivery_proof",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [
+      "auth_data",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.236,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0044",
+    "merchant_id": "mch_06",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "customer_communication_log",
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "tracking_number"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.649,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0045",
+    "merchant_id": "mch_03",
+    "reason_code": "F29",
+    "network": "Amex",
+    "dispute_amount_inr": 1500,
+    "evidence_present": [
+      "auth_data",
+      "device_fingerprint",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.323,
+    "case_type": "standard",
+    "notes": ""
+  },
+  {
+    "case_id": "case_0046",
+    "merchant_id": "mch_01",
+    "reason_code": "4853",
+    "network": "Mastercard",
+    "dispute_amount_inr": 3200,
+    "evidence_present": [
+      "customer_communication_log",
+      "product_description_match"
+    ],
+    "missing_evidence": [
+      "return_policy_acceptance"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.428,
+    "case_type": "portfolio_pair_A",
+    "notes": "Same dispute as portfolio_pair_B, different merchant risk profile \u2014 engine should diverge."
+  },
+  {
+    "case_id": "case_0047",
+    "merchant_id": "mch_04",
+    "reason_code": "4853",
+    "network": "Mastercard",
+    "dispute_amount_inr": 3200,
+    "evidence_present": [
+      "customer_communication_log",
+      "product_description_match"
+    ],
+    "missing_evidence": [
+      "return_policy_acceptance"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.573,
+    "case_type": "portfolio_pair_B",
+    "notes": "Same dispute as portfolio_pair_A \u2014 mch_04 is near network threshold, should concede/escalate where mch_01 might contest."
+  },
+  {
+    "case_id": "case_0048",
+    "merchant_id": "mch_02",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 4200,
+    "evidence_present": [
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "tracking_number",
+      "customer_communication_log"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.544,
+    "case_type": "counterfactual_baseline",
+    "notes": "Missing delivery_proof \u2014 baseline weak case for counterfactual demo."
+  },
+  {
+    "case_id": "case_0049",
+    "merchant_id": "mch_02",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 4200,
+    "evidence_present": [
+      "customer_communication_log",
+      "delivery_proof",
+      "tracking_number"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.684,
+    "case_type": "counterfactual_with_evidence",
+    "notes": "Same case as counterfactual_baseline but with delivery_proof added \u2014 should flip decision."
+  },
+  {
+    "case_id": "case_0050",
+    "merchant_id": "mch_08",
+    "reason_code": "F29",
+    "network": "Amex",
+    "dispute_amount_inr": 180,
+    "evidence_present": [
+      "auth_data",
+      "device_fingerprint",
+      "ip_geolocation"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.512,
+    "case_type": "trivial_amount",
+    "notes": "Amount below typical ops cost of contesting \u2014 should concede even with strong evidence."
+  },
+  {
+    "case_id": "case_0051",
+    "merchant_id": "mch_07",
+    "reason_code": "10.4",
+    "network": "Visa",
+    "dispute_amount_inr": 95000,
+    "evidence_present": [
+      "customer_communication_log",
+      "delivery_proof"
+    ],
+    "missing_evidence": [
+      "auth_data",
+      "ip_geolocation"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.44,
+    "case_type": "high_value_uncertain",
+    "notes": "High stakes + partial evidence in a hard fraud category \u2014 textbook escalate case."
+  },
+  {
+    "case_id": "case_0052",
+    "merchant_id": "mch_03",
+    "reason_code": "13.1",
+    "network": "Visa",
+    "dispute_amount_inr": 5200,
+    "evidence_present": [
+      "customer_communication_log",
+      "delivery_proof",
+      "tracking_number"
+    ],
+    "missing_evidence": [],
+    "evidence_completeness_score": 1.0,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 1,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.673,
+    "case_type": "late_response_window",
+    "notes": "Only 1 day left to respond despite strong evidence \u2014 operational feasibility matters, not just win probability."
+  },
+  {
+    "case_id": "case_0053",
+    "merchant_id": "mch_05",
+    "reason_code": "4837",
+    "network": "Mastercard",
+    "dispute_amount_inr": 7600,
+    "evidence_present": [
+      "auth_data",
+      "device_fingerprint"
+    ],
+    "missing_evidence": [
+      "ip_geolocation"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": true,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.19,
+    "case_type": "repeat_arbitration",
+    "notes": "Second-stage arbitration after an initial loss \u2014 higher fee, different EV calculus."
+  },
+  {
+    "case_id": "case_0054",
+    "merchant_id": "mch_06",
+    "reason_code": "F29",
+    "network": "Amex",
+    "dispute_amount_inr": 2100,
+    "evidence_present": [
+      "device_fingerprint"
+    ],
+    "missing_evidence": [
+      "auth_data",
+      "ip_geolocation"
+    ],
+    "evidence_completeness_score": 0.33,
+    "conflicting_evidence": true,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": null,
+    "case_type": "friendly_fraud_suspected",
+    "notes": "Auth data matches normal usage pattern, but customer insists non-recognition \u2014 ambiguous by nature, included to test abstention rather than false confidence."
+  },
+  {
+    "case_id": "case_0055",
+    "merchant_id": "mch_04",
+    "reason_code": "13.3",
+    "network": "Visa",
+    "dispute_amount_inr": 3400,
+    "evidence_present": [
+      "customer_communication_log",
+      "return_policy_acceptance"
+    ],
+    "missing_evidence": [
+      "product_description_match"
+    ],
+    "evidence_completeness_score": 0.67,
+    "conflicting_evidence": true,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "lost",
+    "simulated_win_probability": 0.459,
+    "case_type": "conflicting_evidence",
+    "notes": "Delivery confirmed but signed for by a different name than the cardholder \u2014 evidence pulls in two directions."
+  },
+  {
+    "case_id": "case_0056",
+    "merchant_id": "mch_02",
+    "reason_code": "12.5",
+    "network": "Visa",
+    "dispute_amount_inr": 1250,
+    "evidence_present": [
+      "terms_acceptance"
+    ],
+    "missing_evidence": [
+      "signed_receipt"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "won",
+    "simulated_win_probability": 0.846,
+    "case_type": "partial_refund_mismatch",
+    "notes": "Merchant already refunded 40% before the dispute was filed; disputed amount doesn't reconcile with remaining charge."
+  },
+  {
+    "case_id": "case_0057",
+    "merchant_id": "mch_08",
+    "reason_code": "10.4",
+    "network": "Visa",
+    "dispute_amount_inr": 5400,
+    "evidence_present": [
+      "auth_data",
+      "customer_communication_log"
+    ],
+    "missing_evidence": [
+      "ip_geolocation",
+      "delivery_proof"
+    ],
+    "evidence_completeness_score": 0.5,
+    "conflicting_evidence": false,
+    "response_deadline_days_left": 8,
+    "is_repeat_dispute": false,
+    "true_outcome": "unknown",
+    "simulated_win_probability": null,
+    "case_type": "unresolved_ground_truth",
+    "notes": "Case outcome not yet determined at data collection time \u2014 included to keep the eval harness honest about what it can and can't score."
+  }
+]

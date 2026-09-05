@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Abstain — Risk Console</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #101820;
+    --panel: #17222D;
+    --panel-raised: #1D2A36;
+    --hairline: #2A3742;
+    --text: #EDEFF2;
+    --muted: #8B99A6;
+    --contest: #3FA796;
+    --concede: #C1544C;
+    --escalate: #D6A24B;
+    --accent: #5B7FDB;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',sans-serif; font-size:14px;
+    display:flex; min-height:100vh;
+  }
+  ::selection{ background:var(--accent); color:#fff; }
+
+  /* ---------- left rail ---------- */
+  .rail{
+    width:230px; flex-shrink:0; border-right:1px solid var(--hairline);
+    padding:28px 20px; display:flex; flex-direction:column; gap:26px;
+  }
+  .wordmark{ font-family:'Source Serif 4',serif; font-size:22px; font-weight:600; letter-spacing:-0.01em; }
+  .tagline{ color:var(--muted); font-size:12px; margin-top:4px; line-height:1.55; }
+
+  nav{ display:flex; flex-direction:column; gap:3px; }
+  .nav-item{ display:flex; flex-direction:column; }
+  nav button{
+    all:unset; cursor:pointer; padding:9px 10px; border-radius:var(--radius);
+    color:var(--muted); font-size:13.5px; display:flex; align-items:center; gap:8px;
+  }
+  nav button:hover{ background:var(--panel); color:var(--text); }
+  nav button.active{ background:var(--panel-raised); color:var(--text); border-left:2px solid var(--accent); padding-left:8px; }
+  .nav-step{
+    width:16px; height:16px; border-radius:50%; border:1px solid var(--hairline); flex-shrink:0;
+    font-family:'JetBrains Mono',monospace; font-size:9.5px; display:flex; align-items:center; justify-content:center;
+    color:var(--muted);
+  }
+  nav button.active .nav-step{ border-color:var(--accent); color:var(--accent); }
+  .nav-hint{ color:var(--muted); font-size:11px; padding:0 10px 8px 34px; line-height:1.4; }
+
+  .rail-footer{ margin-top:auto; }
+  .status-row{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
+  .dot{ width:7px; height:7px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+  .dot.live{ background:var(--contest); }
+  .dot.fallback{ background:var(--escalate); }
+  .api-input{
+    width:100%; margin-top:10px; background:var(--panel); border:1px solid var(--hairline);
+    color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:11px;
+    padding:6px 8px; border-radius:var(--radius);
+  }
+
+  /* ---------- main ---------- */
+  main{ flex:1; padding:36px 44px; max-width:940px; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+  h1{ font-family:'Source Serif 4',serif; font-weight:600; font-size:23px; margin:0 0 6px; }
+  .sub{ color:var(--muted); font-size:13px; margin:0 0 24px; max-width:66ch; line-height:1.65; }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--hairline); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:18px;
+  }
+  .panel h2{ font-size:12.5px; text-transform:none; color:var(--muted); margin:0 0 14px; font-weight:500; }
+
+  /* form */
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; }
+  input[type=text], input[type=number], select, textarea{
+    width:100%; background:var(--panel-raised); border:1px solid var(--hairline); color:var(--text);
+    padding:8px 10px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px;
+  }
+  input:focus, select:focus, textarea:focus, button:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  textarea{ resize:vertical; min-height:52px; }
+  .field{ margin-bottom:14px; }
+  .checks{ display:flex; flex-wrap:wrap; gap:10px; }
+  .checks label{ display:flex; align-items:center; gap:6px; color:var(--text); font-size:13px; margin:0; }
+  .checks input{ width:auto; }
+
+  button.primary{
+    all:unset; cursor:pointer; background:var(--accent); color:#fff; padding:10px 18px;
+    border-radius:var(--radius); font-size:13.5px; font-weight:500;
+  }
+  button.primary:hover{ filter:brightness(1.08); }
+  button.primary:disabled{ opacity:0.5; cursor:default; }
+  button.ghost{
+    all:unset; cursor:pointer; color:var(--accent); font-size:13px; padding:8px 4px; font-weight:500;
+  }
+  button.ghost:hover{ text-decoration:underline; }
+
+  /* verdict */
+  .verdict{ display:flex; align-items:baseline; gap:14px; margin-bottom:6px; flex-wrap:wrap; }
+  .verdict-action{ font-family:'Source Serif 4',serif; font-size:30px; font-weight:600; }
+  .verdict-action.CONTEST{ color:var(--contest); }
+  .verdict-action.CONCEDE{ color:var(--concede); }
+  .verdict-action.ESCALATE{ color:var(--escalate); }
+  .verdict-meta{ color:var(--muted); font-size:12.5px; font-family:'JetBrains Mono',monospace; }
+
+  .memo{
+    font-family:'Source Serif 4',serif; font-size:14.5px; line-height:1.75; white-space:pre-wrap;
+    background:var(--panel-raised); border-left:2px solid var(--hairline); padding:14px 18px;
+    border-radius:0 var(--radius) var(--radius) 0; margin-top:14px;
+  }
+  .verdict-action.CONTEST + .verdict-meta ~ .memo{ border-left-color:var(--contest); }
+
+  /* next-step nudge, driven only by the action string already in the response */
+  .nudge{
+    margin-top:14px; padding:12px 15px; border-radius:var(--radius); font-size:13px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:var(--panel-raised); border:1px dashed var(--hairline); color:var(--muted);
+  }
+  .nudge span{ line-height:1.5; }
+
+  .auditlog{ list-style:none; margin:0; padding:0; }
+  .auditlog li{
+    padding:8px 0 8px 16px; border-left:1px solid var(--hairline); font-size:12.5px;
+    color:var(--muted); font-family:'JetBrains Mono',monospace; position:relative;
+  }
+  .auditlog li::before{
+    content:''; position:absolute; left:-4px; top:13px; width:7px; height:7px;
+    border-radius:50%; background:var(--hairline);
+  }
+
+  /* tables */
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; color:var(--muted); font-weight:500; font-size:11.5px; padding:6px 10px; border-bottom:1px solid var(--hairline); }
+  td{ padding:9px 10px; border-bottom:1px solid var(--hairline); font-family:'JetBrains Mono',monospace; font-size:12.5px; }
+  tr:last-child td{ border-bottom:none; }
+  .badge{
+    display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px;
+    font-family:'Inter',sans-serif; font-weight:500;
+  }
+  .badge.CONTEST{ background:rgba(63,167,150,0.15); color:var(--contest); }
+  .badge.CONCEDE{ background:rgba(193,84,76,0.15); color:var(--concede); }
+  .badge.ESCALATE{ background:rgba(214,162,75,0.15); color:var(--escalate); }
+
+  .empty{ color:var(--muted); font-size:13px; padding:22px 4px; text-align:left; line-height:1.7; }
+  .empty .empty-title{ color:var(--text); font-size:14px; margin-bottom:6px; font-family:'Source Serif 4',serif; }
+  .error{ color:var(--concede); font-size:13px; margin-top:10px; }
+  .report{
+    font-family:'Inter',sans-serif; font-size:13px; line-height:1.65; color:var(--text);
+    max-height:65vh; overflow-y:auto; padding-right:6px;
+  }
+  .report-h1{ font-family:'Source Serif 4',serif; font-weight:600; font-size:19px; margin:0 0 6px; }
+  .report-h2{ font-family:'Source Serif 4',serif; font-weight:600; font-size:15px; margin:22px 0 10px;
+    padding-top:14px; border-top:1px solid var(--hairline); }
+  .report-h2:first-child{ border-top:none; padding-top:0; margin-top:0; }
+  .report-h3{ font-size:13px; font-weight:600; color:var(--text); margin:16px 0 8px; }
+  .report-p{ color:var(--muted); margin:0 0 10px; font-size:13px; }
+  .report-p em{ color:var(--muted); font-style:italic; }
+  .report-list{ margin:0 0 12px; padding-left:20px; }
+  .report-list li{ margin-bottom:5px; color:var(--muted); }
+  .report code{ font-family:'JetBrains Mono',monospace; font-size:11.5px; background:var(--panel-raised);
+    padding:1px 5px; border-radius:3px; color:var(--text); }
+  table.report-table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:16px; }
+  table.report-table th{ text-align:left; color:var(--muted); font-weight:500; font-size:11px;
+    padding:6px 10px; border-bottom:1px solid var(--hairline); }
+  table.report-table td{ padding:8px 10px; border-bottom:1px solid var(--hairline);
+    font-family:'JetBrains Mono',monospace; font-size:12px; }
+  table.report-table tr:last-child td{ border-bottom:none; }
+  .esc-row{ cursor:pointer; }
+  .esc-row:hover td{ background:var(--panel-raised); }
+  .esc-detail td{ font-family:'Source Serif 4',serif; font-size:13px; line-height:1.7; color:var(--muted);
+    white-space:pre-wrap; background:var(--panel-raised); padding:12px 14px; }
+  .esc-hint{ color:var(--muted); font-size:11.5px; margin-top:10px; }
+  .report-controls{ display:flex; gap:10px; margin-bottom:16px; align-items:center; }
+  .report-controls select{ width:auto; }
+
+  /* ---------- three-way decision strip ---------- */
+  .decision-strip{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--hairline);
+    border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden; margin-bottom:24px; }
+  .decision-strip > div{ background:var(--panel); padding:14px 16px; }
+  .decision-strip .dlabel{ font-family:'Source Serif 4',serif; font-size:15px; font-weight:600; margin-bottom:4px; }
+  .decision-strip .ddesc{ color:var(--muted); font-size:12px; line-height:1.5; }
+  .decision-strip .dlabel.CONTEST{ color:var(--contest); }
+  .decision-strip .dlabel.CONCEDE{ color:var(--concede); }
+  .decision-strip .dlabel.ESCALATE{ color:var(--escalate); }
+
+  /* ---------- evidence toggle chips (same checkbox inputs underneath, restyled) ---------- */
+  .checks{ display:flex; flex-wrap:wrap; gap:8px; }
+  .checks label{
+    position:relative; display:inline-flex; align-items:center; gap:0; margin:0;
+    padding:7px 13px; border-radius:14px; border:1px solid var(--hairline); background:var(--panel-raised);
+    color:var(--muted); font-size:12.5px; cursor:pointer; transition:border-color .12s, color .12s, background .12s;
+  }
+  .checks label:has(input:checked){ border-color:var(--contest); color:var(--text); background:rgba(63,167,150,0.12); }
+  .checks input{ position:absolute; opacity:0; width:0; height:0; }
+
+  /* ---------- verdict entrance (single orchestrated moment, not per-card) ---------- */
+  @media (prefers-reduced-motion: no-preference){
+    #resultPanel{ animation:resultIn .35s ease-out; }
+  }
+  @keyframes resultIn{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <div>
+    <div class="wordmark">Abstain</div>
+    <div class="tagline">The LLM drafts and reads.<br>A deterministic engine decides.</div>
+  </div>
+  <nav>
+    <div class="nav-item">
+      <button data-view="evaluate" class="active"><span class="nav-step">1</span>Evaluate a dispute</button>
+      <div class="nav-hint">Start here — run one case through the engine.</div>
+    </div>
+    <div class="nav-item">
+      <button data-view="escalations"><span class="nav-step">2</span>Escalation queue</button>
+      <div class="nav-hint">See what the engine wouldn't decide alone.</div>
+    </div>
+    <div class="nav-item">
+      <button data-view="reports"><span class="nav-step">3</span>Portfolio intelligence</button>
+      <div class="nav-hint">Find out why disputes keep being lost.</div>
+    </div>
+  </nav>
+  <div class="rail-footer">
+    <div class="status-row"><span class="dot" id="statusDot"></span><span id="statusText">checking API…</span></div>
+    <input class="api-input" id="apiBase" value="http://localhost:8000" spellcheck="false">
+  </div>
+</div>
+
+<main>
+
+  <!-- ===== EVALUATE ===== -->
+  <section class="view active" id="view-evaluate">
+    <h1>Evaluate a dispute</h1>
+    <p class="sub">Runs the full pipeline: retrieval → evidence scoring → the deterministic decision engine. Nothing here is scripted — this calls your real API.</p>
+
+    <div class="decision-strip">
+      <div><div class="dlabel CONTEST">Contest</div><div class="ddesc">Evidence and economics clear the bar — the engine acts on its own.</div></div>
+      <div><div class="dlabel CONCEDE">Concede</div><div class="ddesc">Contesting wouldn't pay off, or there's no time left to respond.</div></div>
+      <div><div class="dlabel ESCALATE">Escalate</div><div class="ddesc">Too uncertain to decide automatically — a person should look.</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Case details</h2>
+      <div class="grid2">
+        <div class="field"><label>Case ID</label><input type="text" id="f_case_id" value="demo_001"></div>
+        <div class="field"><label>Merchant</label>
+          <select id="f_merchant_id">
+            <option value="mch_01">mch_01 — Apex Electronics (aggressive)</option>
+            <option value="mch_02">mch_02 — Lumina Boutique (conservative)</option>
+            <option value="mch_03">mch_03 — Northbridge SaaS (aggressive)</option>
+            <option value="mch_04">mch_04 — Curio Home Decor (conservative)</option>
+            <option value="mch_05">mch_05 — Vantage Fitness Gear (moderate)</option>
+            <option value="mch_06">mch_06 — Zenith Digital Courses (conservative)</option>
+            <option value="mch_07">mch_07 — Ferro Industrial Supplies (aggressive)</option>
+            <option value="mch_08">mch_08 — Pinnacle Mobile Accessories (moderate)</option>
+          </select>
+        </div>
+        <div class="field"><label>Reason code</label>
+          <select id="f_reason_code">
+            <option value="13.1">13.1 — Merchandise Not Received</option>
+            <option value="12.5">12.5 — Incorrect Amount</option>
+            <option value="10.4">10.4 — Fraud, Card-Absent</option>
+            <option value="4853">4853 — Defective / Not as Described</option>
+            <option value="4837">4837 — No Cardholder Authorization</option>
+            <option value="C08">C08 — Goods Not Received (Amex)</option>
+            <option value="F29">F29 — Card Not Present Fraud (Amex)</option>
+            <option value="13.3">13.3 — Not as Described</option>
+          </select>
+        </div>
+        <div class="field"><label>Amount (₹)</label><input type="number" id="f_amount" value="4500"></div>
+        <div class="field"><label>Days left to respond</label><input type="number" id="f_days" value="10"></div>
+      </div>
+      <div class="field">
+        <label>Case flags</label>
+        <div class="checks">
+          <label><input type="checkbox" id="f_repeat"> Repeat / arbitration dispute</label>
+          <label><input type="checkbox" id="f_conflict"> Evidence conflicts internally</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Present evidence</label>
+        <div class="checks">
+          <label><input type="checkbox" value="delivery_proof" checked> delivery_proof</label>
+          <label><input type="checkbox" value="tracking_number" checked> tracking_number</label>
+          <label><input type="checkbox" value="customer_communication_log"> customer_communication_log</label>
+          <label><input type="checkbox" value="signed_receipt"> signed_receipt</label>
+          <label><input type="checkbox" value="auth_data"> auth_data</label>
+          <label><input type="checkbox" value="ip_geolocation"> ip_geolocation</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Dispute description (drives retrieval)</label>
+        <textarea id="f_reason_text">Customer says the package never arrived despite tracking showing delivered.</textarea>
+      </div>
+      <button class="primary" id="btnEvaluate">Run decision engine</button>
+      <div class="error" id="evalError" style="display:none;"></div>
+    </div>
+
+    <div id="resultPanel" style="display:none;"></div>
+  </section>
+
+  <!-- ===== ESCALATIONS ===== -->
+  <section class="view" id="view-escalations">
+    <h1>Escalation queue</h1>
+    <p class="sub">Every case currently sitting at ESCALATE, ranked by expected value of a human's limited review time — not FIFO, not amount alone.</p>
+    <div class="panel">
+      <button class="primary" id="btnLoadEsc" style="margin-bottom:14px;">Refresh queue</button>
+      <div id="escTable">
+        <div class="empty">
+          <div class="empty-title">Queue not loaded yet</div>
+          Click "Refresh queue" to pull the current list. If it comes back empty, that's expected until a case is uncertain enough to trigger ESCALATE — try the "high-value, evidence cuts both ways" scenario on the Evaluate tab, then check back here.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== REPORTS ===== -->
+  <section class="view" id="view-reports">
+    <h1>Portfolio intelligence</h1>
+    <p class="sub">Root-cause reporting: not "we lost this dispute," but "we keep losing disputes because X is missing."</p>
+    <div class="panel">
+      <div class="report-controls">
+        <select id="reportScope">
+          <option value="portfolio">Whole portfolio</option>
+          <option value="mch_01">mch_01 — Apex Electronics</option>
+          <option value="mch_02">mch_02 — Lumina Boutique</option>
+          <option value="mch_03">mch_03 — Northbridge SaaS</option>
+          <option value="mch_04">mch_04 — Curio Home Decor</option>
+          <option value="mch_05">mch_05 — Vantage Fitness Gear</option>
+          <option value="mch_06">mch_06 — Zenith Digital Courses</option>
+          <option value="mch_07">mch_07 — Ferro Industrial Supplies</option>
+          <option value="mch_08">mch_08 — Pinnacle Mobile Accessories</option>
+        </select>
+        <button class="primary" id="btnLoadReport">Load report</button>
+      </div>
+      <div class="report" id="reportOut"><p class="report-p">Select a scope and load a report.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const $ = sel => document.querySelector(sel);
+const apiBase = () => $('#apiBase').value.replace(/\/$/, '');
+
+// ---------- nav ----------
+document.querySelectorAll('nav button[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => switchView(btn.dataset.view));
+});
+function switchView(name){
+  document.querySelectorAll('nav button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+}
+
+// ---------- health check ----------
+async function checkHealth(){
+  const dot = $('#statusDot'), txt = $('#statusText');
+  try{
+    const r = await fetch(apiBase() + '/health');
+    const d = await r.json();
+    if(d.llm_configured){
+      dot.className = 'dot live'; txt.textContent = 'API live · Groq configured';
+    } else {
+      dot.className = 'dot fallback'; txt.textContent = 'API live · fallback heuristic';
+    }
+  }catch(e){
+    dot.className = 'dot'; txt.textContent = 'API unreachable';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 8000);
+
+// ---------- evaluate ----------
+$('#btnEvaluate').addEventListener('click', async () => {
+  const errEl = $('#evalError'); errEl.style.display = 'none';
+  const btn = $('#btnEvaluate'); btn.disabled = true; btn.textContent = 'Running…';
+
+  const present_evidence = Array.from(document.querySelectorAll('#view-evaluate .checks input:checked')).map(c => c.value);
+  const payload = {
+    case_id: $('#f_case_id').value,
+    merchant_id: $('#f_merchant_id').value,
+    reason_code: $('#f_reason_code').value,
+    dispute_amount_inr: Number($('#f_amount').value),
+    response_deadline_days_left: Number($('#f_days').value),
+    is_repeat_dispute: $('#f_repeat').checked,
+    conflicting_evidence: $('#f_conflict').checked,
+    present_evidence,
+    dispute_reason_text: $('#f_reason_text').value,
+  };
+
+  try{
+    const r = await fetch(apiBase() + '/disputes/evaluate', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    if(!r.ok){ const d = await r.json(); throw new Error(d.detail || ('HTTP ' + r.status)); }
+    const d = await r.json();
+    renderResult(d);
+  }catch(e){
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Run decision engine';
+  }
+});
+
+function renderResult(d){
+  const panel = $('#resultPanel');
+  panel.style.display = 'block';
+
+  const winPct = d.win_probability != null ? Math.round(d.win_probability * 100) : null;
+  const degraded = d.degraded_mode ? '<span style="color:var(--escalate)">· fallback heuristic used (no live LLM)</span>' : '';
+
+  let html = `
+    <div class="panel">
+      <div class="verdict">
+        <span class="verdict-action ${d.action || ''}">${d.action || 'ERROR'}</span>
+        <span class="verdict-meta">P(win) ${winPct != null ? winPct + '%' : '—'} · confidence ${d.confidence_label || '—'} ${degraded}</span>
+      </div>
+      <div class="memo">${(d.memo || 'No decision reached — see audit log below.').replace(/</g,'&lt;')}</div>
+      ${nudgeFor(d.action)}
+    </div>
+  `;
+
+  if(d.counterfactual_note){
+    html += `
+      <div class="panel">
+        <h2>Counterfactual</h2>
+        <div class="memo" style="font-size:13.5px;">${d.counterfactual_note.replace(/</g,'&lt;')}</div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="panel">
+      <h2>Audit log</h2>
+      <ul class="auditlog">
+        ${(d.audit_log || []).map(line => `<li>${line.replace(/</g,'&lt;')}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+
+  panel.innerHTML = html;
+
+  const goBtn = document.getElementById('nudgeGo');
+  if(goBtn){
+    goBtn.addEventListener('click', () => {
+      const target = goBtn.dataset.target;
+      switchView(target);
+      if(target === 'escalations'){ $('#btnLoadEsc').click(); }
+    });
+  }
+}
+
+// Purely a UI suggestion built from the action string the API already returns —
+// does not read any field the previous version didn't already use.
+function nudgeFor(action){
+  if(action === 'ESCALATE'){
+    return `<div class="nudge"><span>This case wasn't confident enough to auto-decide — it belongs to a human now.</span>
+      <button class="ghost" id="nudgeGo" data-target="escalations">See the escalation queue →</button></div>`;
+  }
+  if(action === 'CONTEST' || action === 'CONCEDE'){
+    return `<div class="nudge"><span>Curious whether this fits a wider pattern for this merchant?</span>
+      <button class="ghost" id="nudgeGo" data-target="reports">Open portfolio intelligence →</button></div>`;
+  }
+  return '';
+}
+
+// ---------- escalations ----------
+$('#btnLoadEsc').addEventListener('click', async () => {
+  const out = $('#escTable');
+  out.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const r = await fetch(apiBase() + '/escalations/ranked');
+    const rows = await r.json();
+    if(!rows.length){
+      out.innerHTML = `<div class="empty">
+        <div class="empty-title">Nothing waiting on a human right now</div>
+        That's the deterministic engine finding enough signal to decide on its own. Run a case with conflicting or thin evidence on the Evaluate tab to see one land here.
+      </div>`;
+      return;
+    }
+    out.innerHTML = `
+      <table>
+        <thead><tr><th>Rank</th><th>Case</th><th>Review value (₹)</th><th>Action</th></tr></thead>
+        <tbody>
+          ${rows.map((r, idx) => `
+            <tr class="esc-row" data-idx="${idx}">
+              <td>${r.rank}</td>
+              <td>${r.case_id}</td>
+              <td>₹${Number(r.human_review_value_inr).toLocaleString('en-IN')}</td>
+              <td><span class="badge ${r.action}">${r.action}</span></td>
+            </tr>
+            <tr class="esc-detail" data-idx="${idx}" style="display:none;">
+              <td colspan="4">${(r.memo || 'No memo recorded for this case.').replace(/</g,'&lt;')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="esc-hint">Click a row to see why the engine escalated it.</div>
+    `;
+    out.querySelectorAll('.esc-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const detail = out.querySelector(`.esc-detail[data-idx="${row.dataset.idx}"]`);
+        if(detail) detail.style.display = detail.style.display === 'none' ? '' : 'none';
+      });
+    });
+  }catch(e){
+    out.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+  }
+});
+
+// ---------- reports ----------
+// Small renderer for exactly the markdown shapes this backend emits
+// (headers, bold/italic, inline code, bullet lists, pipe tables) —
+// not a general-purpose markdown parser.
+function escapeHtml(s){
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+}
+function renderInline(text){
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*]+)\*($|[^*])/g, '$1<em>$2</em>$3')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+function renderTable(rows){
+  const dataRows = rows.filter(r => !/^\|[\s:|-]+\|$/.test(r));
+  const cells = dataRows.map(r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim()));
+  const [header, ...body] = cells;
+  let html = '<table class="report-table"><thead><tr>' +
+    header.map(h => `<th>${renderInline(h)}</th>`).join('') + '</tr></thead><tbody>';
+  body.forEach(r => { html += '<tr>' + r.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>'; });
+  return html + '</tbody></table>';
+}
+function renderMarkdown(md){
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  let html = '', i = 0, firstHeading = true;
+  while(i < lines.length){
+    const line = lines[i];
+    if(/^\s*\|/.test(line)){
+      const tableLines = [];
+      while(i < lines.length && /^\s*\|/.test(lines[i])){ tableLines.push(lines[i].trim()); i++; }
+      html += renderTable(tableLines);
+      continue;
+    }
+    const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
+    if(headingMatch){
+      const level = headingMatch[1].length;
+      const cls = level === 1 ? 'report-h1' : (level === 2 ? 'report-h2' : 'report-h3');
+      html += `<div class="${cls}">${renderInline(headingMatch[2])}</div>`;
+      i++; continue;
+    }
+    if(/^\s*-\s+/.test(line)){
+      const items = [];
+      while(i < lines.length && /^\s*-\s+/.test(lines[i])){
+        items.push(lines[i].replace(/^\s*-\s+/, '')); i++;
+      }
+      html += '<ul class="report-list">' + items.map(it => `<li>${renderInline(it)}</li>`).join('') + '</ul>';
+      continue;
+    }
+    if(line.trim() === ''){ i++; continue; }
+    html += `<p class="report-p">${renderInline(line)}</p>`;
+    i++;
+  }
+  return html;
+}
+
+$('#btnLoadReport').addEventListener('click', async () => {
+  const scope = $('#reportScope').value;
+  const out = $('#reportOut');
+  out.innerHTML = '<p class="report-p">Loading…</p>';
+  const path = scope === 'portfolio' ? '/reports/portfolio' : `/reports/merchant/${scope}`;
+  try{
+    const r = await fetch(apiBase() + path);
+    if(!r.ok){ const d = await r.json(); throw new Error(d.detail || ('HTTP ' + r.status)); }
+    const d = await r.json();
+    out.innerHTML = d.markdown ? renderMarkdown(d.markdown) : `<pre style="white-space:pre-wrap;">${escapeHtml(JSON.stringify(d, null, 2))}</pre>`;
+  }catch(e){
+    out.innerHTML = `<p class="error">Error: ${escapeHtml(e.message)}</p>`;
+  }
+});
+</script>
+
+</body>
+</html>
