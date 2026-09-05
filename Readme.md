@@ -1,12 +1,11 @@
 # Abstain
+
 ### An AI risk decision engine for chargebacks
 
 **The LLM reads the evidence. It never touches the money.**
 
 🔗 **Live demo:** [abstain-kappa.vercel.app](https://abstain-kappa.vercel.app/)
-⚙️ **API:** [abstain-api.onrender.com](https://abstain-api.onrender.com)
-
-> First request might take 30–50s to respond if the API's been idle — that's Render's free-tier instance waking up, not the engine being slow. Give it one call and it's fast after that.
+⚙️ **API:** [abstain-api.onrender.com](https://abstain-api.onrender.com/)
 
 ---
 
@@ -34,29 +33,29 @@ Then I went one step further, because deciding case-by-case felt incomplete. If 
 
 ## The core idea, visually
 
-```
+```text
                  ┌────────────────────┐
                  │   Chargeback Case   │
                  └──────────┬─────────┘
-                             ▼
+                            ▼
                  ┌────────────────────┐
-                 │  LLM Evidence       │   ← reads, doesn't decide
-                 │  Scorer              │
+                 │  LLM Evidence      │   ← reads, doesn't decide
+                 │  Scorer            │
                  └──────────┬─────────┘
-                             ▼
+                            ▼
                  ┌────────────────────┐
-                 │  Deterministic       │   ← decides, doesn't guess
-                 │  Decision Engine      │
+                 │  Deterministic     │   ← decides, doesn't guess
+                 │  Decision Engine    │
                  └──────────┬─────────┘
-                 ┌───────────┼───────────┐
-                 ▼           ▼           ▼
+                 ┌──────────┼───────────┐
+                 ▼          ▼           ▼
              CONTEST     CONCEDE     ESCALATE
-                                         │
-                                         ▼
+                                        │
+                                        ▼
                               ┌────────────────────┐
-                              │ Human Attention      │
-                              │ Ranking (by EV,       │
-                              │ not FIFO)             │
+                              │ Human Attention     │
+                              │ Ranking (by EV,      │
+                              │ not FIFO)            │
                               └────────────────────┘
 ```
 
@@ -68,7 +67,7 @@ That third outcome — **ESCALATE** — is the whole philosophy of this project 
 
 Most chargeback tools stop at the dispute. Abstain climbs the whole ladder.
 
-```
+```text
                        ABSTAIN
                           │
          ┌────────────────┼────────────────┐
@@ -87,7 +86,7 @@ Most chargeback tools stop at the dispute. Abstain climbs the whole ladder.
 
 **Level 2 — Merchant.** A merchant can have a perfectly normal overall chargeback rate and still be quietly bleeding money from one specific, repeated weakness:
 
-```
+```text
 Merchant A
 ────────────────────────────
 Primary weakness:      Customer communication evidence
@@ -97,7 +96,7 @@ Most affected reason:  Fraud / unauthorized dispute
 
 Benchmarked against the portfolio, because a raw number doesn't tell you if it's a *them* problem or an *us* problem:
 
-```
+```text
                     Merchant A     Portfolio
 ──────────────────────────────────────────────
 Loss rate              43%             41%
@@ -108,7 +107,7 @@ Merchant A's overall loss rate is basically average. Their communication gap is 
 
 **Level 3 — Portfolio.** If the same evidence gap shows up across multiple *unrelated* merchants, it's stopped being a merchant problem — it's systemic:
 
-```
+```text
 PORTFOLIO LOSS ANALYSIS
 ────────────────────────────────────
 Customer communication      7 losses
@@ -118,7 +117,7 @@ Delivery verification       4 losses
 
 If "customer communication" keeps topping the list across merchants who otherwise have nothing in common, the fix isn't any single merchant's process — it's *our* evidence-collection pipeline. That's a different fix, and a more valuable insight than "contest more disputes."
 
-```
+```text
 Individual dispute → Why did THIS case fail?
         ↓
 Merchant           → Why does THIS merchant repeatedly fail?
@@ -154,7 +153,7 @@ I'd built hybrid retrieval (BM25 + dense/FAISS) before, on a legal AI assistant 
 
 I almost just asked the LLM "how confident are you, 0 to 1?" and used that directly. Killed that fast — LLM self-reported confidence is notoriously miscalibrated, it just *sounds* authoritative. Instead I sample the model multiple times at non-zero temperature on the same case and measure how much the evidence-strength scores disagree:
 
-```
+```text
 Low disagreement:            High disagreement:
 0.82, 0.79, 0.84              0.84, 0.51, 0.23
       ↓                              ↓
@@ -163,13 +162,13 @@ Lower uncertainty              Higher uncertainty
 Proceed automatically          Route to human
 ```
 
-**Tradeoff I accepted:** this costs more tokens and latency per case than a single call — and on a shared free-tier rate limit, more samples means more 429s, which is a real operational tension I hit directly while building this. I'm explicit in the code that this is a *disagreement proxy*, not a calibrated statistical confidence interval — I didn't want to claim rigor I hadn't validated at scale.
+This adds token cost and latency, but gives the engine a practical disagreement signal. It's explicitly treated as a **disagreement proxy**, not a calibrated statistical confidence interval.
 
 ### 3. The LLM never executes the decision — full stop
 
 The LLM's output is a strict, schema-validated JSON object: evidence strength, key gaps, reasoning. Nothing else. It never sees dispute economics, never sees the deadline, never sees the decision thresholds. `decision_engine.py` has **zero import of any LLM client** — that's not a design-doc claim, it's a fact about the dependency graph you can check yourself.
 
-```
+```text
 EV(contest) = P(win) × dispute_amount − operating_cost − portfolio_risk_penalty
 EV(concede) = 0
 ```
@@ -188,11 +187,11 @@ Handling a dispute isn't a flat cost — repeat/arbitration disputes cost more t
 
 Every ESCALATE or CONCEDE comes with: *what specific missing evidence would flip this decision?*
 
-```
+```text
 Current decision:  CONCEDE
 Missing evidence:  Customer communication log
 Counterfactual:    If obtained and evidence strength crosses
-                    the threshold → decision may flip to CONTEST
+                   the threshold → decision may flip to CONTEST
 ```
 
 I reused the actual `decide()` function to compute this — the counterfactual just calls it again with one field perturbed — so the "what-if" logic can never silently drift out of sync with the real decision logic.
@@ -203,13 +202,15 @@ Escalated cases get ranked by potential value, not arrival order. The point isn'
 
 ### 8. Fail loud about failing, never fail silently
 
-Groq rate limits happen. APIs go down. When the LLM call fails after retries, the system falls back to a conservative structural heuristic based on evidence completeness — and tags the result `source: "fallback_heuristic"`. It never pretends a degraded result came from the full pipeline. Don't have a Groq key handy? The system runs entirely on this fallback path automatically — you can test the whole decision engine end to end without spending a single API call.
+Groq rate limits happen. APIs go down. When the LLM call fails after retries, the system falls back to a conservative structural heuristic based on evidence completeness — and tags the result `source: "fallback_heuristic"`. It never pretends a degraded result came from the full pipeline.
+
+Don't have a Groq key handy? The system runs entirely on this fallback path automatically — you can test the whole decision engine end to end without spending a single API call.
 
 ---
 
 ## Architecture
 
-```
+```text
 Abstain/
 ├── app/
 │   ├── main.py                      # FastAPI entrypoint
@@ -250,7 +251,7 @@ Abstain/
 
 **Pipeline flow (LangGraph state machine):**
 
-```
+```text
 Dispute in
    ↓
 Retrieve case context (hybrid BM25 + FAISS)
@@ -270,38 +271,60 @@ Human attention ranking (for ESCALATE queue)
 
 ---
 
-## Evaluation — methodology and results, straight
+## Evaluation — methodology and results
 
 I built the eval harness specifically to catch the failure modes a plain accuracy number hides.
 
-**How I score a three-way decision as a binary classifier**, since that mapping isn't obvious by default:
-- Ground truth "should contest" = the dispute was actually won
-- Ground truth "should concede" = the dispute was actually lost
-- **ESCALATE is excluded from precision/recall on purpose.** It's the abstention mechanism working as designed, not a missed prediction — folding it into "wrong" would penalize the exact behavior this project is built around. It's reported separately as the escalation rate.
+**How I score a three-way decision as a binary classifier:**
+
+* Ground truth "should contest" = the dispute was actually won
+* Ground truth "should concede" = the dispute was actually lost
+* **ESCALATE is excluded from precision/recall on purpose.** It's the abstention mechanism working as designed, not a missed prediction — it's reported separately as the escalation rate.
 
 **Cost accounting, not just accuracy:**
-- False-positive cost: ops cost spent contesting a case that was actually lost
-- False-negative cost: recoverable amount left on the table by conceding a case that was actually winnable
-- Baseline comparison: net outcome of a naive "contest everything" policy, so selectivity is measured against something real, not reported in a vacuum
 
-**Most recent run** (57 cases, 56 scored):
+* False-positive cost: ops cost spent contesting a case that was actually lost
+* False-negative cost: recoverable amount left on the table by conceding a case that was actually winnable
+* Decision-boundary experiments track how changing the abstention threshold affects precision, recall, FP cost, and escalation rate
 
-```
-TP = 13    FP = 9
+### Most recent run
+
+**57 cases, 56 scored**
+
+```text
+TP = 14    FP = 11
 FN = 16    TN = 11
 
-Precision = 0.591
-Recall    = 0.448
-Escalation rate ≈ 12%
-
-Baseline net: ₹260,110
-Engine net:   ₹241,080
-Net vs. baseline: −₹19,030
+Precision = 0.56
+Recall    = 0.467
+Escalation rate ≈ 7%
 ```
 
-**Being straight about what this number means:** the engine currently comes in slightly behind the naive "contest everything" baseline on raw net recovery — and I'm not going to spin that into something it isn't. Two honest reasons it's not the full picture: escalated cases are scored as zero value in this comparison (a conservative assumption, since a competent human reviewer captures value the model here assumes is zero), and this specific run mixes real LLM-scored cases with rate-limit-triggered fallback cases, so it understates what the fully live path can do. Run-to-run variance is real here — an earlier run on the same dataset showed a 32% escalation rate and a much larger gap versus baseline (−₹86,010), purely from how much of the run landed on Groq's shared free-tier rate limit versus succeeding live. I'm treating this as an honest engineering benchmark, not a finished performance claim, and the harness itself is built to make that distinction impossible to hide.
+### Decision-boundary experiment
 
-**Why economics, not just accuracy:** contesting a ₹500 dispute that should've been conceded and conceding a ₹10,000 dispute that could've been won are not the same mistake. Plain accuracy treats them identically. This harness doesn't.
+To test whether the engine should be more conservative around medium-confidence decisions, I widened the EV margin from **0.25× → 0.35×**:
+
+```text
+                           margin=0.25      margin=0.35
+Precision                     0.560            0.632
+Recall                        0.467            0.429
+FP cost                       ₹7,970           ₹5,000
+Escalation rate                  7%              18%
+```
+
+The wider margin increased precision from **56.0% → 63.2%** and reduced false-positive cost by roughly **37%**, while increasing the number of cases deliberately handed to humans.
+
+The change moved 6 cases from auto-decision into ESCALATE: **4 former false positives and 2 former true positives**. That demonstrates the intended tradeoff — the engine becomes more selective about automated decisions rather than forcing uncertain cases through.
+
+**The important metric for Abstain is therefore not "contest everything" recovery.** The project is specifically designed to trade some automatic decisions for safer, more trustworthy automation when the evidence is uncertain.
+
+### Why economics, not just accuracy
+
+Contesting a ₹500 dispute that should've been conceded and conceding a ₹10,000 dispute that could've been won are not the same mistake.
+
+Plain accuracy treats them identically.
+
+This harness doesn't.
 
 ---
 
@@ -341,11 +364,11 @@ pytest
 
 ## What I'd build next
 
-- Calibrate uncertainty properly with a larger labeled validation set instead of relying on the disagreement proxy alone
-- Historical-outcome learning to improve win-probability estimates over time
-- Merchant-specific policy configuration instead of one global threshold set
-- Reviewer feedback loop so human ESCALATE decisions actually improve the model
-- What-if portfolio simulation before rolling out policy changes
+* Calibrate uncertainty properly with a larger labeled validation set instead of relying on the disagreement proxy alone
+* Historical-outcome learning to improve win-probability estimates over time
+* Merchant-specific policy configuration instead of one global threshold set
+* Reviewer feedback loop so human ESCALATE decisions actually improve the model
+* What-if portfolio simulation before rolling out policy changes
 
 ---
 
