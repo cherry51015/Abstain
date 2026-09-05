@@ -34,6 +34,7 @@ class EngineConfig:
     Tune these against the eval harness, not by feel."""
     min_days_to_respond: int = 2          # below this, contesting isn't operationally feasible
     high_confidence_uncertainty_max: float = 0.15   # uncertainty below this = trust the point estimate
+    medium_confidence_ev_margin_fraction: float = 0.35
     low_confidence_uncertainty_min: float = 0.35    # uncertainty above this = don't trust it, escalate
     trivial_amount_floor_multiplier: float = 1.0    # if amount < ops_cost * this, contesting can't pay off
     portfolio_penalty_max_inr: float = 5000.0       # cap on how much threshold-proximity can inflate cost
@@ -108,7 +109,9 @@ class DecisionEngine:
                 f"EV_contest={ev_contest:,.0f} INR {'> 0, contest.' if ev_contest > 0 else '<= 0, concede.'}"
             )
         else:  # MEDIUM confidence — require a wider EV margin before auto-acting
-            margin = 0.25 * (ops_cost + portfolio_penalty)
+            margin = self.config.medium_confidence_ev_margin_fraction * (
+    ops_cost + portfolio_penalty
+)
             if ev_contest > margin:
                 action = Action.CONTEST
                 reasons.append(
