@@ -434,13 +434,13 @@ pytest
 
 ---
 
-## Tech stack
+## Tech Stack
 
-**Backend** — Python, FastAPI, Pydantic, PostgreSQL, Docker
-**Retrieval** — BM25 + FAISS
-**AI/LLM** — LangChain, LangGraph, Groq, self-consistency uncertainty estimation, structured output validation
-**Evaluation** — Python
-**Deployment** — Vercel + Render
+**Backend:** Python, FastAPI, Pydantic, PostgreSQL, Docker  
+**AI & LLM:** LangChain, LangGraph, Groq, Self-Consistency, Structured Output Validation  
+**Retrieval:** BM25, FAISS  
+**Evaluation:** Python  
+**Deployment:** Vercel, Render
 
 ---
 
