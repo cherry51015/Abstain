@@ -35,7 +35,7 @@ Then I went one step further, because deciding case-by-case felt incomplete. If 
 
 ```text
                  ┌────────────────────┐
-                 │   Chargeback Case   │
+                 │   Chargeback Case  │
                  └──────────┬─────────┘
                             ▼
                  ┌────────────────────┐
@@ -45,7 +45,7 @@ Then I went one step further, because deciding case-by-case felt incomplete. If 
                             ▼
                  ┌────────────────────┐
                  │  Deterministic     │   ← decides, doesn't guess
-                 │  Decision Engine    │
+                 │  Decision Engine   │
                  └──────────┬─────────┘
                  ┌──────────┼───────────┐
                  ▼          ▼           ▼
@@ -53,9 +53,9 @@ Then I went one step further, because deciding case-by-case felt incomplete. If 
                                         │
                                         ▼
                               ┌────────────────────┐
-                              │ Human Attention     │
-                              │ Ranking (by EV,      │
-                              │ not FIFO)            │
+                              │ Human Attention    │
+                              │ Ranking (by EV,    │
+                              │ not FIFO)          │
                               └────────────────────┘
 ```
 
