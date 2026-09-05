@@ -45,7 +45,7 @@ And when the evidence isn't good enough?
 
 ```text
                  ┌────────────────────┐
-                 │   Chargeback Case   │
+                 │   Chargeback Case  │
                  └──────────┬─────────┘
                             ▼
                  ┌────────────────────┐
@@ -67,9 +67,9 @@ And when the evidence isn't good enough?
                                         │
                                         ▼
                               ┌────────────────────┐
-                              │ Human Attention     │
-                              │ Ranking by EV       │
-                              │ instead of FIFO     │
+                              │ Human Attention    │
+                              │ Ranking by EV      │
+                              │ instead of FIFO    │
                               └────────────────────┘
 ```
 
