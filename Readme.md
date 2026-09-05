@@ -4,8 +4,10 @@
 
 **The LLM reads the evidence. It never touches the money.**
 
-🔗 **Live demo / Use the app:** [abstain-kappa.vercel.app](https://abstain-kappa.vercel.app/)  
+
+🔗 **Live demo / Use the app:** [abstain-kappa.vercel.app](https://abstain-kappa.vercel.app/) 
 ⚙️ **Test the API:** [abstain-api.onrender.com/docs](https://abstain-api.onrender.com/docs)
+🎥 **Demo video:** [Watch the 5-minute demo](https://drive.google.com/file/d/1kmbxfUQINjY_97tH_sngFnEZVdPCFyCM/view?usp=sharing)  
 
 ---
 
