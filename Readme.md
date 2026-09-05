@@ -1,9 +1,7 @@
 # Abstain
-
-### An AI risk decision engine for chargebacks
+### *The Intelligence Beyond the Dispute*
 
 **The LLM reads the evidence. It never touches the money.**
-
 
 🔗 **Live demo / Use the app:** [abstain-kappa.vercel.app](https://abstain-kappa.vercel.app/) 
 
