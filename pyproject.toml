@@ -1,0 +1,20 @@
+[project]
+name = "abstain"
+version = "1.0.0"
+description = "Chargeback decision engine: LLM fact extraction, calibrated P(win), value-of-information escalation."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = ["ignore::PendingDeprecationWarning:starlette.*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["alembic/versions", "venv", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ASYNC"]
+ignore = ["E501", "B008"]  # line length handled by formatter; FastAPI Depends() defaults are idiomatic

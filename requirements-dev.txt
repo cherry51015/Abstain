@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest==8.3.3
+hypothesis==6.115.0
+scikit-learn==1.7.2      # offline training (scripts/train_win_model.py) and metric cross-checks in tests
+ruff==0.7.1

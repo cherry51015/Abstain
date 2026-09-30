@@ -1,0 +1,15 @@
+.git
+.cache
+venv
+.venv
+**/__pycache__
+.pytest_cache
+.env
+*.db
+*.sqlite
+tests
+eval
+frontend
+demo_screenshots
+dataset
+docs

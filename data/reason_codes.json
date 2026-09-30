@@ -1,0 +1,93 @@
+[
+  {
+    "code": "13.1",
+    "network": "Visa",
+    "label": "Merchandise/Services Not Received",
+    "category": "not_received",
+    "relevant_facts": [
+      "delivery_confirmed",
+      "signed_by_cardholder",
+      "customer_acknowledged_receipt"
+    ]
+  },
+  {
+    "code": "C08",
+    "network": "Amex",
+    "label": "Goods/Services Not Received",
+    "category": "not_received",
+    "relevant_facts": [
+      "delivery_confirmed",
+      "signed_by_cardholder",
+      "customer_acknowledged_receipt"
+    ]
+  },
+  {
+    "code": "10.4",
+    "network": "Visa",
+    "label": "Other Fraud - Card-Absent Environment",
+    "category": "fraud",
+    "relevant_facts": [
+      "avs_cvv_match",
+      "ip_consistent_with_cardholder",
+      "prior_undisputed_orders",
+      "delivery_confirmed",
+      "signed_by_cardholder"
+    ]
+  },
+  {
+    "code": "4837",
+    "network": "Mastercard",
+    "label": "No Cardholder Authorization",
+    "category": "fraud",
+    "relevant_facts": [
+      "avs_cvv_match",
+      "ip_consistent_with_cardholder",
+      "prior_undisputed_orders",
+      "delivery_confirmed",
+      "signed_by_cardholder"
+    ]
+  },
+  {
+    "code": "F29",
+    "network": "Amex",
+    "label": "Card Not Present - Fraud",
+    "category": "fraud",
+    "relevant_facts": [
+      "avs_cvv_match",
+      "ip_consistent_with_cardholder",
+      "prior_undisputed_orders",
+      "delivery_confirmed",
+      "signed_by_cardholder"
+    ]
+  },
+  {
+    "code": "13.3",
+    "network": "Visa",
+    "label": "Not as Described / Defective Merchandise",
+    "category": "not_as_described",
+    "relevant_facts": [
+      "item_matches_description",
+      "return_or_refund_offered"
+    ]
+  },
+  {
+    "code": "4853",
+    "network": "Mastercard",
+    "label": "Cardholder Dispute - Defective/Not as Described",
+    "category": "not_as_described",
+    "relevant_facts": [
+      "item_matches_description",
+      "return_or_refund_offered"
+    ]
+  },
+  {
+    "code": "12.5",
+    "network": "Visa",
+    "label": "Incorrect Transaction Amount",
+    "category": "incorrect_amount",
+    "relevant_facts": [
+      "amount_matches_agreement",
+      "signed_by_cardholder"
+    ]
+  }
+]

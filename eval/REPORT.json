@@ -1,0 +1,795 @@
+{
+ "model_version": "wm-d9e4b0f2fe",
+ "llm_model": "openai/gpt-oss-120b",
+ "llm_samples": 3,
+ "splits": {
+  "test": {
+   "oracle": {
+    "n": 250,
+    "wall_s": 0.1,
+    "extraction": {
+     "accuracy_known_facts": 1.0,
+     "accuracy_all_facts": 1.0,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 1.0,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1358,
+     "log_loss": 0.4187,
+     "ece": 0.0307,
+     "auc": 0.8851,
+     "mae_vs_true_p": 0.0368,
+     "mean_std": 0.0516,
+     "coverage_90": 0.9
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -428698,
+      "expected_vs_contest_all_ci95": [
+       -648270,
+       -266898
+      ],
+      "realized_vs_contest_all": -385080,
+      "realized_vs_contest_all_ci95": [
+       -643174,
+       -184105
+      ],
+      "contest": 0,
+      "concede": 250,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 428698,
+      "realized_net_inr": 385080,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 234,
+      "concede": 16,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 479777,
+      "realized_net_inr": 436780,
+      "expected_vs_contest_all": 51079,
+      "expected_vs_contest_all_ci95": [
+       41332,
+       60932
+      ],
+      "realized_vs_contest_all": 51700,
+      "realized_vs_contest_all_ci95": [
+       28129,
+       70730
+      ],
+      "contest": 126,
+      "concede": 120,
+      "escalate": 4
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 480527,
+      "realized_net_inr": 437530,
+      "expected_vs_contest_all": 51829,
+      "expected_vs_contest_all_ci95": [
+       42013,
+       61632
+      ],
+      "realized_vs_contest_all": 52450,
+      "realized_vs_contest_all_ci95": [
+       28746,
+       71451
+      ],
+      "contest": 128,
+      "concede": 122,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 481386
+    },
+    "classification": {
+     "precision": 0.595,
+     "recall": 0.694,
+     "tp": 75,
+     "fp": 51,
+     "tn": 87,
+     "fn": 33,
+     "fp_cost_inr": 37110,
+     "fn_cost_inr": 50270,
+     "escalation_rate": 0.016
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.837,
+      "recall": 0.621,
+      "tp": 36,
+      "fp": 7,
+      "tn": 27,
+      "fn": 22,
+      "fp_cost_inr": 5300,
+      "fn_cost_inr": 27850,
+      "escalation_rate": 0.632,
+      "expected_net_inr": 481386
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.615,
+      "recall": 0.694,
+      "tp": 75,
+      "fp": 47,
+      "tn": 83,
+      "fn": 33,
+      "fp_cost_inr": 33860,
+      "fn_cost_inr": 50270,
+      "escalation_rate": 0.048,
+      "expected_net_inr": 480426
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.595,
+      "recall": 0.694,
+      "tp": 75,
+      "fp": 51,
+      "tn": 87,
+      "fn": 33,
+      "fp_cost_inr": 37110,
+      "fn_cost_inr": 50270,
+      "escalation_rate": 0.016,
+      "expected_net_inr": 479777
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.591,
+      "recall": 0.688,
+      "tp": 75,
+      "fp": 52,
+      "tn": 88,
+      "fn": 34,
+      "fp_cost_inr": 37810,
+      "fn_cost_inr": 52300,
+      "escalation_rate": 0.004,
+      "expected_net_inr": 480227
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.591,
+      "recall": 0.688,
+      "tp": 75,
+      "fp": 52,
+      "tn": 88,
+      "fn": 34,
+      "fp_cost_inr": 37810,
+      "fn_cost_inr": 52300,
+      "escalation_rate": 0.004,
+      "expected_net_inr": 480027
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.586,
+      "recall": 0.688,
+      "tp": 75,
+      "fp": 53,
+      "tn": 88,
+      "fn": 34,
+      "fp_cost_inr": 38210,
+      "fn_cost_inr": 52300,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 480527
+     }
+    ]
+   },
+   "rules": {
+    "n": 250,
+    "wall_s": 0.2,
+    "extraction": {
+     "accuracy_known_facts": 0.9969,
+     "accuracy_all_facts": 0.9987,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 0.971,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1358,
+     "log_loss": 0.4187,
+     "ece": 0.0307,
+     "auc": 0.8851,
+     "mae_vs_true_p": 0.0368,
+     "mean_std": 0.0516,
+     "coverage_90": 0.9
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -428698,
+      "expected_vs_contest_all_ci95": [
+       -648270,
+       -266898
+      ],
+      "realized_vs_contest_all": -385080,
+      "realized_vs_contest_all_ci95": [
+       -643174,
+       -184105
+      ],
+      "contest": 0,
+      "concede": 250,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 428698,
+      "realized_net_inr": 385080,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 234,
+      "concede": 16,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 479777,
+      "realized_net_inr": 436780,
+      "expected_vs_contest_all": 51079,
+      "expected_vs_contest_all_ci95": [
+       41332,
+       60932
+      ],
+      "realized_vs_contest_all": 51700,
+      "realized_vs_contest_all_ci95": [
+       28129,
+       70730
+      ],
+      "contest": 126,
+      "concede": 120,
+      "escalate": 4
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 480527,
+      "realized_net_inr": 437530,
+      "expected_vs_contest_all": 51829,
+      "expected_vs_contest_all_ci95": [
+       42013,
+       61632
+      ],
+      "realized_vs_contest_all": 52450,
+      "realized_vs_contest_all_ci95": [
+       28746,
+       71451
+      ],
+      "contest": 128,
+      "concede": 122,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 481386
+    },
+    "classification": {
+     "precision": 0.595,
+     "recall": 0.694,
+     "tp": 75,
+     "fp": 51,
+     "tn": 87,
+     "fn": 33,
+     "fp_cost_inr": 37110,
+     "fn_cost_inr": 50270,
+     "escalation_rate": 0.016
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.837,
+      "recall": 0.621,
+      "tp": 36,
+      "fp": 7,
+      "tn": 27,
+      "fn": 22,
+      "fp_cost_inr": 5300,
+      "fn_cost_inr": 27850,
+      "escalation_rate": 0.632,
+      "expected_net_inr": 481386
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.615,
+      "recall": 0.694,
+      "tp": 75,
+      "fp": 47,
+      "tn": 83,
+      "fn": 33,
+      "fp_cost_inr": 33860,
+      "fn_cost_inr": 50270,
+      "escalation_rate": 0.048,
+      "expected_net_inr": 480426
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.595,
+      "recall": 0.694,
+      "tp": 75,
+      "fp": 51,
+      "tn": 87,
+      "fn": 33,
+      "fp_cost_inr": 37110,
+      "fn_cost_inr": 50270,
+      "escalation_rate": 0.016,
+      "expected_net_inr": 479777
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.591,
+      "recall": 0.688,
+      "tp": 75,
+      "fp": 52,
+      "tn": 88,
+      "fn": 34,
+      "fp_cost_inr": 37810,
+      "fn_cost_inr": 52300,
+      "escalation_rate": 0.004,
+      "expected_net_inr": 480227
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.591,
+      "recall": 0.688,
+      "tp": 75,
+      "fp": 52,
+      "tn": 88,
+      "fn": 34,
+      "fp_cost_inr": 37810,
+      "fn_cost_inr": 52300,
+      "escalation_rate": 0.004,
+      "expected_net_inr": 480027
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.586,
+      "recall": 0.688,
+      "tp": 75,
+      "fp": 53,
+      "tn": 88,
+      "fn": 34,
+      "fp_cost_inr": 38210,
+      "fn_cost_inr": 52300,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 480527
+     }
+    ]
+   }
+  },
+  "test_shifted": {
+   "oracle": {
+    "n": 250,
+    "wall_s": 0.1,
+    "extraction": {
+     "accuracy_known_facts": 1.0,
+     "accuracy_all_facts": 1.0,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 1.0,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.165,
+     "log_loss": 0.5011,
+     "ece": 0.0764,
+     "auc": 0.831,
+     "mae_vs_true_p": 0.0405,
+     "mean_std": 0.0491,
+     "coverage_90": 0.892
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -381615,
+      "expected_vs_contest_all_ci95": [
+       -565302,
+       -236979
+      ],
+      "realized_vs_contest_all": -417640,
+      "realized_vs_contest_all_ci95": [
+       -636911,
+       -242914
+      ],
+      "contest": 0,
+      "concede": 250,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 381615,
+      "realized_net_inr": 417640,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 232,
+      "concede": 18,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 433938,
+      "realized_net_inr": 471470,
+      "expected_vs_contest_all": 52323,
+      "expected_vs_contest_all_ci95": [
+       42554,
+       62278
+      ],
+      "realized_vs_contest_all": 53830,
+      "realized_vs_contest_all_ci95": [
+       30090,
+       74340
+      ],
+      "contest": 119,
+      "concede": 127,
+      "escalate": 4
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 434988,
+      "realized_net_inr": 472520,
+      "expected_vs_contest_all": 53373,
+      "expected_vs_contest_all_ci95": [
+       43649,
+       63184
+      ],
+      "realized_vs_contest_all": 54880,
+      "realized_vs_contest_all_ci95": [
+       31429,
+       75242
+      ],
+      "contest": 122,
+      "concede": 128,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 437060
+    },
+    "classification": {
+     "precision": 0.597,
+     "recall": 0.696,
+     "tp": 71,
+     "fp": 48,
+     "tn": 96,
+     "fn": 31,
+     "fp_cost_inr": 32450,
+     "fn_cost_inr": 87790,
+     "escalation_rate": 0.016
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.854,
+      "recall": 0.648,
+      "tp": 35,
+      "fp": 6,
+      "tn": 27,
+      "fn": 19,
+      "fp_cost_inr": 4210,
+      "fn_cost_inr": 59360,
+      "escalation_rate": 0.652,
+      "expected_net_inr": 437060
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.603,
+      "recall": 0.693,
+      "tp": 70,
+      "fp": 46,
+      "tn": 94,
+      "fn": 31,
+      "fp_cost_inr": 30960,
+      "fn_cost_inr": 87790,
+      "escalation_rate": 0.036,
+      "expected_net_inr": 434181
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.597,
+      "recall": 0.696,
+      "tp": 71,
+      "fp": 48,
+      "tn": 96,
+      "fn": 31,
+      "fp_cost_inr": 32450,
+      "fn_cost_inr": 87790,
+      "escalation_rate": 0.016,
+      "expected_net_inr": 433938
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.587,
+      "recall": 0.696,
+      "tp": 71,
+      "fp": 50,
+      "tn": 97,
+      "fn": 31,
+      "fp_cost_inr": 34050,
+      "fn_cost_inr": 87790,
+      "escalation_rate": 0.004,
+      "expected_net_inr": 434688
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.587,
+      "recall": 0.696,
+      "tp": 71,
+      "fp": 50,
+      "tn": 97,
+      "fn": 31,
+      "fp_cost_inr": 34050,
+      "fn_cost_inr": 87790,
+      "escalation_rate": 0.004,
+      "expected_net_inr": 434488
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.582,
+      "recall": 0.696,
+      "tp": 71,
+      "fp": 51,
+      "tn": 97,
+      "fn": 31,
+      "fp_cost_inr": 34450,
+      "fn_cost_inr": 87790,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 434988
+     }
+    ]
+   },
+   "rules": {
+    "n": 250,
+    "wall_s": 0.5,
+    "extraction": {
+     "accuracy_known_facts": 0.087,
+     "accuracy_all_facts": 0.5987,
+     "per_fact_known": {
+      "delivery_confirmed": 0.164,
+      "signed_by_cardholder": 0.259,
+      "customer_acknowledged_receipt": 0.159,
+      "item_matches_description": 0.0,
+      "return_or_refund_offered": 0.25,
+      "avs_cvv_match": 0.0,
+      "ip_consistent_with_cardholder": 0.0,
+      "prior_undisputed_orders": 0.0,
+      "amount_matches_agreement": 0.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.2361,
+     "log_loss": 0.6632,
+     "ece": 0.0832,
+     "auc": 0.5956,
+     "mae_vs_true_p": 0.2675,
+     "mean_std": 0.2607,
+     "coverage_90": 0.868
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -381615,
+      "expected_vs_contest_all_ci95": [
+       -565302,
+       -236979
+      ],
+      "realized_vs_contest_all": -417640,
+      "realized_vs_contest_all_ci95": [
+       -636911,
+       -242914
+      ],
+      "contest": 0,
+      "concede": 250,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 381615,
+      "realized_net_inr": 417640,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 232,
+      "concede": 18,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 407775,
+      "realized_net_inr": 452610,
+      "expected_vs_contest_all": 26160,
+      "expected_vs_contest_all_ci95": [
+       15160,
+       36747
+      ],
+      "realized_vs_contest_all": 34970,
+      "realized_vs_contest_all_ci95": [
+       21359,
+       48130
+      ],
+      "contest": 129,
+      "concede": 90,
+      "escalate": 31
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 409819,
+      "realized_net_inr": 451080,
+      "expected_vs_contest_all": 28204,
+      "expected_vs_contest_all_ci95": [
+       17530,
+       38756
+      ],
+      "realized_vs_contest_all": 33440,
+      "realized_vs_contest_all_ci95": [
+       20560,
+       45961
+      ],
+      "contest": 158,
+      "concede": 92,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 437060
+    },
+    "classification": {
+     "precision": 0.434,
+     "recall": 0.615,
+     "tp": 56,
+     "fp": 73,
+     "tn": 55,
+     "fn": 35,
+     "fp_cost_inr": 51280,
+     "fn_cost_inr": 81610,
+     "escalation_rate": 0.124
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 1.0,
+      "recall": 0.053,
+      "tp": 1,
+      "fp": 0,
+      "tn": 24,
+      "fn": 18,
+      "fp_cost_inr": 0,
+      "fn_cost_inr": 58590,
+      "escalation_rate": 0.828,
+      "expected_net_inr": 437060
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.394,
+      "recall": 0.467,
+      "tp": 28,
+      "fp": 43,
+      "tn": 47,
+      "fn": 32,
+      "fp_cost_inr": 29540,
+      "fn_cost_inr": 75390,
+      "escalation_rate": 0.4,
+      "expected_net_inr": 417147
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.434,
+      "recall": 0.615,
+      "tp": 56,
+      "fp": 73,
+      "tn": 55,
+      "fn": 35,
+      "fp_cost_inr": 51280,
+      "fn_cost_inr": 81610,
+      "escalation_rate": 0.124,
+      "expected_net_inr": 407775
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.429,
+      "recall": 0.653,
+      "tp": 66,
+      "fp": 88,
+      "tn": 57,
+      "fn": 35,
+      "fp_cost_inr": 62320,
+      "fn_cost_inr": 81610,
+      "escalation_rate": 0.016,
+      "expected_net_inr": 409749
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.423,
+      "recall": 0.653,
+      "tp": 66,
+      "fp": 90,
+      "tn": 57,
+      "fn": 35,
+      "fp_cost_inr": 63620,
+      "fn_cost_inr": 81610,
+      "escalation_rate": 0.008,
+      "expected_net_inr": 409421
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.424,
+      "recall": 0.657,
+      "tp": 67,
+      "fp": 91,
+      "tn": 57,
+      "fn": 35,
+      "fp_cost_inr": 65060,
+      "fn_cost_inr": 81610,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 409819
+     }
+    ]
+   }
+  }
+ }
+}

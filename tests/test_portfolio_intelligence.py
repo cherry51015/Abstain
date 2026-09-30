@@ -1,153 +1,120 @@
-"""
-test_portfolio_intelligence.py
-
-Covers the merchant/portfolio scope split: the two views must be
-independently correct AND mutually consistent — a merchant's numbers in
-the portfolio table have to match what analyze_merchant() produces for
-that same merchant from the same record set.
-"""
+"""Root-cause and calibration aggregations (app/insights.py) on hand-built rows."""
 from __future__ import annotations
 
-import pytest
+from decimal import Decimal
+from types import SimpleNamespace
 
-from app.reporting.portfolio_intelligence import (
-    ResolvedCaseRecord, aggregate_root_causes, analyze_merchant,
-    analyze_portfolio, filter_records_for_merchant, render_merchant_markdown,
-    render_portfolio_markdown, render_markdown,
-)
+from app.db import ActionEnum, OutcomeEnum
+from app.insights import calibration, realized_economics, render_markdown, root_causes
 
 
-def _records() -> list[ResolvedCaseRecord]:
-    return [
-        # mch_a: 2 lost, 1 won -> loss_rate 2/3
-        ResolvedCaseRecord(case_id="c1", merchant_id="mch_a", reason_code="13.1",
-                            true_outcome="lost", missing_evidence=["tracking_number"],
-                            dispute_amount_inr=1000),
-        ResolvedCaseRecord(case_id="c2", merchant_id="mch_a", reason_code="13.1",
-                            true_outcome="lost", missing_evidence=["tracking_number", "delivery_proof"],
-                            dispute_amount_inr=500),
-        ResolvedCaseRecord(case_id="c3", merchant_id="mch_a", reason_code="4853",
-                            true_outcome="won", dispute_amount_inr=200),
-        # mch_b: 1 lost, 1 unknown -> loss_rate 1/1 (unknown excluded from rate)
-        ResolvedCaseRecord(case_id="c4", merchant_id="mch_b", reason_code="13.1",
-                            true_outcome="lost", missing_evidence=["delivery_proof"],
-                            dispute_amount_inr=5000),
-        ResolvedCaseRecord(case_id="c5", merchant_id="mch_b", reason_code="13.1",
-                            true_outcome="unknown"),
-    ]
+def row(case_id, merchant, reason, amount, outcome, facts, p_win=0.5, action=ActionEnum.CONTEST, review=None):
+    ev = SimpleNamespace(facts=facts, p_win=p_win, action=action, review=review, contest_cost_inr=Decimal("500"))
+    return ev, SimpleNamespace(outcome=OutcomeEnum(outcome)), SimpleNamespace(
+        case_id=case_id, merchant_id=merchant, reason_code=reason, amount_inr=Decimal(amount))
 
 
-class TestAggregateRootCauses:
-    def test_empty_records_raises(self):
-        with pytest.raises(ValueError):
-            aggregate_root_causes([])
-
-    def test_unrecognized_outcome_raises(self):
-        bad = [ResolvedCaseRecord(case_id="c1", merchant_id="m", reason_code="x", true_outcome="pending")]
-        with pytest.raises(ValueError):
-            aggregate_root_causes(bad)
-
-    def test_totals_include_unknown(self):
-        """total == won + lost + unknown must hold for every breakdown row —
-        this is the exact relationship that was implicit (and therefore easy
-        to misread) before merchant/reason-code unknown counts existed."""
-        report = analyze_portfolio(_records())
-        for m in report.merchant_breakdown.values():
-            assert m.total == m.won + m.lost + m.unknown
-        for rc in report.reason_code_breakdown.values():
-            assert rc.total == rc.won + rc.lost + rc.unknown
-
-    def test_portfolio_totals(self):
-        report = analyze_portfolio(_records())
-        assert report.total_records == 5
-        assert report.excluded_unknown == 1
-        assert report.resolved == 4
-        assert report.won == 1
-        assert report.lost == 3
-
-    def test_non_evidence_loss_bucket(self):
-        recs = _records() + [
-            ResolvedCaseRecord(case_id="c6", merchant_id="mch_a", reason_code="4853",
-                                true_outcome="lost", missing_evidence=[], dispute_amount_inr=100),
-        ]
-        report = analyze_portfolio(recs)
-        assert "(no missing evidence recorded — non-evidence loss)" in report.missing_evidence_frequency_among_losses
+ROWS = [
+    row("1", "mch_01", "13.1", 4000, "lost", {"delivery_confirmed": "unknown", "signed_by_cardholder": "no"}),
+    row("2", "mch_01", "13.1", 2000, "lost", {"delivery_confirmed": "unknown", "signed_by_cardholder": "yes"}),
+    row("3", "mch_02", "13.1", 9000, "won", {"delivery_confirmed": "yes"}, p_win=0.9),
+    row("4", "mch_02", "12.5", 1000, "lost", {"amount_matches_agreement": "no"}, action=ActionEnum.CONCEDE),
+]
 
 
-class TestMerchantScope:
-    def test_filter_isolates_one_merchant(self):
-        filtered = filter_records_for_merchant(_records(), "mch_a")
-        assert {r.case_id for r in filtered} == {"c1", "c2", "c3"}
-
-    def test_filter_unknown_merchant_raises(self):
-        with pytest.raises(ValueError):
-            filter_records_for_merchant(_records(), "mch_nonexistent")
-
-    def test_analyze_merchant_unknown_id_raises(self):
-        with pytest.raises(ValueError):
-            analyze_merchant(_records(), "mch_nonexistent")
-
-    def test_analyze_merchant_matches_portfolio_breakdown(self):
-        """The load-bearing consistency check: a merchant's own report and
-        that same merchant's row in the portfolio report must agree,
-        because both are produced by the same aggregation over the same
-        underlying records."""
-        records = _records()
-        portfolio = analyze_portfolio(records)
-        merchant_report = analyze_merchant(records, "mch_a")
-
-        portfolio_row = portfolio.merchant_breakdown["mch_a"]
-        assert merchant_report.won == portfolio_row.won
-        assert merchant_report.lost == portfolio_row.lost
-        assert merchant_report.amount_lost_inr == portfolio_row.amount_lost_inr
-        assert merchant_report.loss_rate == portfolio_row.loss_rate
-
-    def test_merchant_report_excludes_other_merchants(self):
-        report = analyze_merchant(_records(), "mch_a")
-        assert set(report.merchant_breakdown.keys()) == {"mch_a"}
-        assert report.total_records == 3
-
-    def test_merchant_weaknesses_scoped_correctly(self):
-        report = analyze_merchant(_records(), "mch_a")
-        assert report.missing_evidence_frequency_among_losses["tracking_number"] == 2
-        assert report.missing_evidence_frequency_among_losses["delivery_proof"] == 1
-        # mch_b's delivery_proof gap must not leak into mch_a's report
-        report_b = analyze_merchant(_records(), "mch_b")
-        assert report_b.missing_evidence_frequency_among_losses["delivery_proof"] == 1
+def test_missing_and_adverse_are_counted_separately(catalog):
+    causes = root_causes(ROWS, catalog)
+    assert dict(causes["top_missing"])["delivery_confirmed"] == 2
+    assert dict(causes["top_adverse"])["signed_by_cardholder"] == 1
+    assert dict(causes["top_adverse"])["amount_matches_agreement"] == 1
+    assert causes["resolved"] == 4 and causes["lost"] == 3
 
 
-class TestHighlights:
-    def test_highest_loss_rate_and_exposure(self):
-        report = analyze_portfolio(_records())
-        # mch_b: 1/1 lost = 100% loss rate, mch_a: 2/3 = 66.7%
-        assert report.merchant_with_highest_loss_rate.merchant_id == "mch_b"
-        # mch_b lost ₹5000 in one case vs mch_a's ₹1500 total
-        assert report.merchant_with_highest_exposure.merchant_id == "mch_b"
-
-    def test_top_weaknesses_sorted_and_deterministic(self):
-        report = analyze_portfolio(_records())
-        counts = [c for _, c in report.top_weaknesses]
-        assert counts == sorted(counts, reverse=True)
+def test_per_merchant_breakdown(catalog):
+    m = root_causes(ROWS, catalog)["merchants"]
+    assert m["mch_01"]["loss_rate"] == 1.0 and m["mch_01"]["amount_lost_inr"] == 6000
+    assert m["mch_02"]["loss_rate"] == 0.5 and m["mch_02"]["threshold_proximity"] is not None
 
 
-class TestRendering:
-    def test_portfolio_render_wrong_scope_raises(self):
-        report = analyze_merchant(_records(), "mch_a")
-        with pytest.raises(ValueError):
-            render_portfolio_markdown(report)
+def test_realized_economics_counts_only_contested_and_honours_reviews():
+    econ = realized_economics(ROWS)
+    assert econ["contested"] == 3 and econ["won"] == 1 and econ["net_recovered_inr"] == 9000 - 3 * 500
+    reviewed = row("5", "mch_03", "13.1", 5000, "won", {}, action=ActionEnum.ESCALATE,
+                   review=SimpleNamespace(action=ActionEnum.CONTEST))
+    assert realized_economics([reviewed])["contested"] == 1
 
-    def test_merchant_render_wrong_scope_raises(self):
-        report = analyze_portfolio(_records())
-        with pytest.raises(ValueError):
-            render_merchant_markdown(report)
 
-    def test_dispatch_render_markdown(self):
-        portfolio_md = render_markdown(analyze_portfolio(_records()))
-        merchant_md = render_markdown(analyze_merchant(_records(), "mch_a"))
-        assert portfolio_md.startswith("# Portfolio Intelligence")
-        assert merchant_md.startswith("# Merchant Root Cause Report — mch_a")
+def test_calibration_alert_needs_enough_cases():
+    few = calibration(ROWS)
+    assert few["n"] == 4 and not few["alert"]
+    many = calibration([row(str(i), "mch_01", "13.1", 1000, "lost", {}, p_win=0.95) for i in range(60)])
+    assert many["alert"] and many["ece"] > 0.9
 
-    def test_merchant_markdown_has_recommendation(self):
-        md = render_markdown(analyze_merchant(_records(), "mch_a"))
-        assert "## Recommendation" in md
-        assert "tracking_number" in md
+
+def test_markdown_renders(catalog):
+    md = render_markdown("Portfolio", root_causes(ROWS, catalog), calibration(ROWS), realized_economics(ROWS))
+    assert "delivery_confirmed" in md and "Merchants" in md
+
+
+def planted_rows():
+    """Planted: mch_01 has its own signature problem; every merchant's pipeline drops the customer's
+    acknowledgement of receipt, and disputes without it are lost while the others are won."""
+    rows = []
+    for m in ["mch_01", "mch_02", "mch_03", "mch_05", "mch_07"]:
+        for i in range(20):
+            ack_missing = i < 16                                                   # 80% missing everywhere
+            facts = {
+                "delivery_confirmed": "yes",
+                "signed_by_cardholder": "no" if (m == "mch_01" and i < 18) or i % 5 == 0 else "yes",  # 90% vs 20%
+                "customer_acknowledged_receipt": "unknown" if ack_missing else "yes",
+            }
+            rows.append(row(f"{m}-{i}", m, "13.1", 1000, "lost" if ack_missing else "won", facts))
+    return rows
+
+
+def test_merchant_specific_weakness_is_benchmarked_and_flagged(catalog):
+    from app.insights import weaknesses
+    w = weaknesses(planted_rows(), catalog)
+    m1 = {x["fact"]: x for x in w["merchants"]["mch_01"]["merchant_specific_weaknesses"]}
+    assert set(m1) == {"signed_by_cardholder"}
+    assert m1["signed_by_cardholder"]["weak_rate"] == 0.9 and m1["signed_by_cardholder"]["rest_of_portfolio_rate"] == 0.2
+    assert m1["signed_by_cardholder"]["z"] > 1.96
+    assert w["merchants"]["mch_01"]["classification"] == "merchant-specific"
+    for other in ["mch_02", "mch_03", "mch_05", "mch_07"]:
+        assert w["merchants"][other]["merchant_specific_weaknesses"] == []
+
+
+def test_shared_gap_that_costs_wins_is_systemic(catalog):
+    from app.insights import weaknesses
+    w = weaknesses(planted_rows(), catalog)
+    assert w["systemic"] == ["customer_acknowledged_receipt"]
+    assert len(w["facts"]["customer_acknowledged_receipt"]["merchants_affected"]) == 5
+    assert w["merchants"]["mch_02"]["classification"] == "systemic"
+
+
+def test_a_common_gap_that_does_not_affect_outcomes_is_not_systemic(catalog):
+    from app.insights import weaknesses
+    rows = [row(f"{m}-{i}", m, "13.1", 1000, "lost" if i % 2 else "won",
+                {"delivery_confirmed": "unknown" if i < 16 else "yes"})
+            for m in ["mch_01", "mch_02", "mch_03"] for i in range(20)]
+    assert weaknesses(rows, catalog)["systemic"] == []
+
+
+def test_small_samples_are_not_flagged(catalog):
+    from app.insights import weaknesses
+    rows = [row(f"x{i}", "mch_01", "13.1", 1000, "lost", {"signed_by_cardholder": "no"}) for i in range(3)]
+    rows += [row(f"y{i}", "mch_02", "13.1", 1000, "lost", {"signed_by_cardholder": "yes"}) for i in range(3)]
+    w = weaknesses(rows, catalog)
+    assert w["merchants"]["mch_01"]["merchant_specific_weaknesses"] == []  # 3 disputes is not evidence
+
+
+def test_signature_is_not_blamed_when_nothing_was_delivered(catalog):
+    """No delivery -> no signature is possible; counting it would confound the two facts."""
+    from app.insights import weaknesses
+    rows = [row(f"{m}-{i}", m, "13.1", 1000, "lost" if i < 12 else "won",
+                {"delivery_confirmed": "no" if i < 12 else "yes",
+                 "signed_by_cardholder": "unknown" if i < 12 else "yes"})
+            for m in ["mch_01", "mch_02", "mch_03"] for i in range(20)]
+    w = weaknesses(rows, catalog)
+    assert "signed_by_cardholder" not in w["systemic"]
+    assert w["facts"]["signed_by_cardholder"]["missing_rate"] == 0.0   # only delivered parcels counted

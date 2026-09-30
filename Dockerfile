@@ -1,35 +1,23 @@
-# Abstain — AI Risk Decision Engine for Chargebacks
-
+# Abstain API. Small on purpose: no torch/FAISS/LangChain at runtime, so it fits a 512 MB instance.
 FROM python:3.12-slim
 
-# build-essential: faiss-cpu / sentence-transformers occasionally need to
-# compile small extensions on slim base images depending on platform.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 
 COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-RUN pip install --no-cache-dir \
-    torch==2.5.1+cpu \
-    --index-url https://download.pytorch.org/whl/cpu
+COPY app/ app/
+COPY alembic/ alembic/
+COPY alembic.ini .
+COPY data/reason_codes.json data/merchants.json data/
+COPY models/ models/
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY app/ ./app/
-COPY dataset/ ./dataset/
-
-# Pre-download the embedding model at BUILD time, not on the first API
-# request — otherwise your first live demo request stalls on a cold
-# Hugging Face download. If the build environment can't reach the internet,
-# this warns and continues rather than failing the build; index_builder.py's
-# BM25-only fallback (see retrieval/index_builder.py) handles it at runtime
-# the same way — degrade, don't break, consistently at both layers.
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')" \
-    || echo "WARNING: could not pre-download embedding model at build time — dense retrieval will fall back to BM25-only at runtime."
+RUN useradd --create-home --uid 10001 abstain && mkdir -p .cache && chown abstain .cache
+USER abstain
 
 EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request,os; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\",\"8000\")}/health')"
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Migrate, then serve. PORT is injected by most PaaS hosts (Render, Railway, Fly).
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]

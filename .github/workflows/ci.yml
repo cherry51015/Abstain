@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: abstain
+          POSTGRES_PASSWORD: abstain
+          POSTGRES_DB: abstain
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U abstain" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Unit, property and API tests
+        run: pytest
+      - name: Migrations apply cleanly to Postgres and match the models
+        env:
+          DATABASE_URL: postgresql://abstain:abstain@localhost:5432/abstain
+        run: |
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
+          alembic upgrade head
+      - name: Dataset is byte-reproducible; model artifact is reproducible within float tolerance
+        run: |
+          python scripts/generate_dataset.py
+          git diff --exit-code -- data/
+          python scripts/train_win_model.py --out /tmp/retrained.json
+          python - <<'EOF'
+          import json, numpy as np
+          a, b = json.load(open("models/win_model.json")), json.load(open("/tmp/retrained.json"))
+          for cat in a["categories"]:
+              np.testing.assert_allclose(a["categories"][cat]["coefs"], b["categories"][cat]["coefs"], atol=1e-3)
+          print("model artifact reproduced")
+          EOF
+      - name: Offline eval (oracle + rules, no API calls)
+        run: python eval/run_eval.py --systems oracle,rules --report ci
+      - name: Merchant/portfolio diagnosis recovers planted problems end to end through the API
+        run: python scripts/portfolio_demo.py
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t abstain:ci .
+      - name: Container boots, migrates and serves
+        run: |
+          docker run -d --name api -p 8000:8000 abstain:ci
+          for i in $(seq 1 30); do curl -fs localhost:8000/ready && exit 0; sleep 1; done
+          docker logs api; exit 1

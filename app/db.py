@@ -1,119 +1,171 @@
 """
-db.py
+Persistence: SQLAlchemy 2.0 models and session plumbing. Schema changes go
+through Alembic migrations (alembic/versions), never create_all() in prod.
 
-Persistence layer: disputes, decisions, and the audit trail. Uses SQLAlchemy
-2.0 declarative style. Works against Postgres (docker-compose) or SQLite
-(local dev without Docker) via the same DB_URL-driven engine — no code
-branches on which one you're using.
-
-Design choice worth stating: merchant fields are stored as a SNAPSHOT on
-each DisputeORM row, not as a live foreign-key join to a mutable merchant
-table. An audit trail has to reflect what was true at decision time — if a
-merchant's risk_tolerance changes next week, a decision made today should
-still show the risk_tolerance that was actually used, not silently inherit
-the update. Live merchant reference data (for making NEW decisions) is
-loaded from merchants.json at app startup, same as reason_codes.json —
-this table is for what was true when, not the live source of truth.
+Design notes:
+  - Evaluations are append-only. Re-evaluating a dispute adds a row; the
+    latest row per case is the current state, older rows are history.
+  - Each evaluation stores a snapshot of its inputs (documents, merchant
+    profile, model version). An audit has to show what was known when the
+    decision was made, not what the reference data says today.
+  - Money is Numeric(12, 2), never float.
 """
 from __future__ import annotations
 
-import os
+import enum
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Iterator
+from datetime import UTC, datetime
+from decimal import Decimal
 
 from sqlalchemy import (
-    create_engine, Column, String, Float, Integer, Boolean, DateTime, ForeignKey, Text
+    JSON,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    create_engine,
+    text,
 )
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker, Session
-
-from app.engine.models import Decision as DecisionModel
-from app.graph.state import PipelineState
-
-Base = declarative_base()
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 
-class DisputeORM(Base):
+def utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class ActionEnum(str, enum.Enum):
+    CONTEST = "CONTEST"
+    CONCEDE = "CONCEDE"
+    ESCALATE = "ESCALATE"
+
+
+class OutcomeEnum(str, enum.Enum):
+    won = "won"
+    lost = "lost"
+
+
+Money = Numeric(12, 2)
+
+
+class DisputeRow(Base):
     __tablename__ = "disputes"
 
-    case_id = Column(String, primary_key=True)
-    merchant_id = Column(String, nullable=False)
-    reason_code = Column(String, nullable=False)
-    dispute_amount_inr = Column(Float, nullable=False)
-    response_deadline_days_left = Column(Integer, nullable=False)
-    is_repeat_dispute = Column(Boolean, default=False)
-    conflicting_evidence = Column(Boolean, default=False)
-    dispute_reason_text = Column(Text, default="")
+    case_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(String(32), index=True)
+    reason_code: Mapped[str] = mapped_column(String(16))
+    category: Mapped[str] = mapped_column(String(32))
+    amount_inr: Mapped[Decimal] = mapped_column(Money)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    # merchant snapshot at decision time — see module docstring
-    merchant_risk_tolerance = Column(String, nullable=False)
-    merchant_historical_win_rate = Column(Float, nullable=False)
-    merchant_threshold_proximity = Column(Float, nullable=False)
-
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
-    decisions = relationship("DecisionORM", back_populates="dispute", cascade="all, delete-orphan")
-    audit_entries = relationship("AuditLogEntryORM", back_populates="dispute", cascade="all, delete-orphan")
+    evaluations: Mapped[list[EvaluationRow]] = relationship(back_populates="dispute", order_by="EvaluationRow.id")
+    outcome: Mapped[OutcomeRow | None] = relationship(back_populates="dispute")
 
 
-class DecisionORM(Base):
-    __tablename__ = "decisions"
+class EvaluationRow(Base):
+    __tablename__ = "evaluations"
+    __table_args__ = (Index("ix_evaluations_case_id_id", "case_id", "id"),)
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    case_id = Column(String, ForeignKey("disputes.case_id"), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    case_id: Mapped[str] = mapped_column(ForeignKey("disputes.case_id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    input_hash: Mapped[str] = mapped_column(String(64), index=True)
 
-    action = Column(String, nullable=False)
-    win_probability = Column(Float, nullable=False)
-    uncertainty = Column(Float, nullable=False)
-    ev_contest_inr = Column(Float, nullable=False)
-    ops_cost_inr = Column(Float, nullable=False)
-    portfolio_risk_penalty_inr = Column(Float, nullable=False)
-    confidence_label = Column(String, nullable=False)
-    memo = Column(Text, nullable=False)
+    action: Mapped[ActionEnum] = mapped_column(Enum(ActionEnum, name="action_enum"))
+    confidence: Mapped[str] = mapped_column(String(8))
+    p_win: Mapped[float]
+    p_win_std: Mapped[float]
+    ev_contest_inr: Mapped[Decimal] = mapped_column(Money)
+    contest_cost_inr: Mapped[Decimal] = mapped_column(Money)
+    review_value_inr: Mapped[Decimal] = mapped_column(Money)
+    review_cost_inr: Mapped[Decimal] = mapped_column(Money)
 
-    evidence_source = Column(String, nullable=True)  # "llm" or "fallback_heuristic" — flags degraded runs
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    facts: Mapped[dict] = mapped_column(JSON)
+    fact_agreement: Mapped[dict] = mapped_column(JSON)
+    unread_facts: Mapped[list] = mapped_column(JSON)
+    conflicts: Mapped[list] = mapped_column(JSON)
+    reasons: Mapped[list] = mapped_column(JSON)
+    counterfactual: Mapped[dict] = mapped_column(JSON)
+    contributions: Mapped[dict] = mapped_column(JSON)
+    audit_log: Mapped[list] = mapped_column(JSON, default=list, server_default=text("'[]'"))
 
-    dispute = relationship("DisputeORM", back_populates="decisions")
+    extraction_source: Mapped[str] = mapped_column(String(24))
+    degraded_reason: Mapped[str | None] = mapped_column(String(32))
+    llm_calls: Mapped[int] = mapped_column(default=0)
+    llm_tokens: Mapped[int] = mapped_column(default=0)
+    model_version: Mapped[str] = mapped_column(String(32))
+    latency_ms: Mapped[int] = mapped_column(default=0)
+    input_snapshot: Mapped[dict] = mapped_column(JSON)       # case fields + documents
+    merchant_snapshot: Mapped[dict] = mapped_column(JSON)
 
-
-class AuditLogEntryORM(Base):
-    __tablename__ = "audit_log_entries"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    case_id = Column(String, ForeignKey("disputes.case_id"), nullable=False)
-    sequence = Column(Integer, nullable=False)
-    message = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
-    dispute = relationship("DisputeORM", back_populates="audit_entries")
-
-
-# ---------------- engine / session plumbing ----------------
-
-def get_db_url() -> str:
-    """Defaults to a local SQLite file if DB_URL isn't set, so the app runs
-    without requiring docker-compose's Postgres for quick local iteration."""
-    return os.environ.get("DB_URL", "sqlite:///./abstain_local.db")
-
-
-def build_engine(db_url: str | None = None):
-    url = db_url or get_db_url()
-    connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
-    return create_engine(url, connect_args=connect_args)
+    dispute: Mapped[DisputeRow] = relationship(back_populates="evaluations")
+    review: Mapped[ReviewRow | None] = relationship(back_populates="evaluation")
 
 
-def init_db(engine) -> None:
-    Base.metadata.create_all(bind=engine)
+class ReviewRow(Base):
+    """A human decision on an escalated evaluation."""
+    __tablename__ = "reviews"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    evaluation_id: Mapped[int] = mapped_column(ForeignKey("evaluations.id"), unique=True)
+    case_id: Mapped[str] = mapped_column(ForeignKey("disputes.case_id"), index=True)
+    reviewer: Mapped[str] = mapped_column(String(64))
+    action: Mapped[ActionEnum] = mapped_column(Enum(ActionEnum, name="action_enum"))
+    note: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    evaluation: Mapped[EvaluationRow] = relationship(back_populates="review")
 
 
-def build_session_factory(engine) -> sessionmaker:
-    return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+class OutcomeRow(Base):
+    """Network resolution, recorded weeks after the decision (e.g. by a reconciliation job)."""
+    __tablename__ = "outcomes"
+
+    case_id: Mapped[str] = mapped_column(ForeignKey("disputes.case_id"), primary_key=True)
+    outcome: Mapped[OutcomeEnum] = mapped_column(Enum(OutcomeEnum, name="outcome_enum"))
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    dispute: Mapped[DisputeRow] = relationship(back_populates="outcome")
+
+
+class IdempotencyKeyRow(Base):
+    __tablename__ = "idempotency_keys"
+    __table_args__ = (UniqueConstraint("key", name="uq_idempotency_key"),)
+
+    key: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    evaluation_id: Mapped[int] = mapped_column(ForeignKey("evaluations.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ---------------------------------------------------------------- plumbing
+
+def build_engine(url: str) -> Engine:
+    if url.startswith("postgres://"):  # Render/Heroku-style URLs
+        url = "postgresql://" + url[len("postgres://"):]
+    kwargs: dict = {"pool_pre_ping": True}
+    if url.startswith("sqlite"):
+        kwargs["connect_args"] = {"check_same_thread": False}
+    return create_engine(url, **kwargs)
+
+
+def build_session_factory(engine: Engine) -> sessionmaker[Session]:
+    return sessionmaker(bind=engine, expire_on_commit=False)
 
 
 @contextmanager
-def session_scope(session_factory: sessionmaker) -> Iterator[Session]:
-    session = session_factory()
+def session_scope(factory: sessionmaker[Session]) -> Iterator[Session]:
+    session = factory()
     try:
         yield session
         session.commit()
@@ -122,46 +174,3 @@ def session_scope(session_factory: sessionmaker) -> Iterator[Session]:
         raise
     finally:
         session.close()
-
-
-# ---------------- persistence of a completed pipeline run ----------------
-
-def save_pipeline_result(session: Session, state: PipelineState) -> None:
-    """Persists a completed PipelineState: the dispute (with merchant
-    snapshot), the decision (if one was reached), and the full audit log.
-    Idempotent on case_id — re-running the same case_id updates rather than
-    duplicates the dispute row, but always appends fresh decision/audit rows
-    so history of repeated evaluations is preserved, not overwritten."""
-    existing = session.get(DisputeORM, state.case.case_id)
-    if existing is None:
-        existing = DisputeORM(case_id=state.case.case_id)
-        session.add(existing)
-
-    existing.merchant_id = state.merchant.merchant_id
-    existing.reason_code = state.case.reason_code
-    existing.dispute_amount_inr = state.case.dispute_amount_inr
-    existing.response_deadline_days_left = state.case.response_deadline_days_left
-    existing.is_repeat_dispute = state.case.is_repeat_dispute
-    existing.conflicting_evidence = state.case.conflicting_evidence
-    existing.dispute_reason_text = state.dispute_reason_text
-    existing.merchant_risk_tolerance = state.merchant.risk_tolerance
-    existing.merchant_historical_win_rate = state.merchant.historical_win_rate
-    existing.merchant_threshold_proximity = state.merchant.threshold_proximity
-
-    if state.decision is not None:
-        d: DecisionModel = state.decision
-        session.add(DecisionORM(
-            case_id=state.case.case_id,
-            action=d.action.value,
-            win_probability=d.win_probability,
-            uncertainty=d.uncertainty,
-            ev_contest_inr=d.ev_contest_inr,
-            ops_cost_inr=d.ops_cost_inr,
-            portfolio_risk_penalty_inr=d.portfolio_risk_penalty_inr,
-            confidence_label=d.confidence_label,
-            memo=d.memo,
-            evidence_source=state.evidence_assessment.source if state.evidence_assessment else None,
-        ))
-
-    for i, message in enumerate(state.audit_log):
-        session.add(AuditLogEntryORM(case_id=state.case.case_id, sequence=i, message=message))

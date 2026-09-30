@@ -1,379 +1,280 @@
 # Abstain
 
-### An AI risk decision engine for chargebacks
+**A chargeback decision service that knows when not to decide.**
 
-**The LLM reads the evidence. It never touches the money.**
+An LLM reads the dispute evidence and extracts verifiable facts. A calibrated model turns those facts into a win
+probability *with uncertainty*. A deterministic policy then picks CONTEST, CONCEDE or ESCALATE by expected value, and
+escalates to a human only when the value of that human's answer exceeds the cost of their time.
 
-🔗 **Live demo:** [abstain-kappa.vercel.app](https://abstain-kappa.vercel.app/)
-⚙️ **API:** [abstain-api.onrender.com](https://abstain-api.onrender.com/)
-
----
-
-## Why I built this
-
-Every chargeback automation tool I looked at was solving the wrong problem. They were all trying to answer "can we win this dispute?" — a yes/no classifier wearing an AI costume.
-
-But that's not what a risk team actually needs. What they need answered is:
-
-> "Given the evidence we have, the money at stake, the deadline we're up against, and this merchant's risk history — should we contest, concede, or get a human to look at this?"
-
-That's a different problem, and it needed a different architecture.
-
-So I built Abstain around one rule I didn't compromise on: **the LLM is never allowed to spend money.** It reads evidence and tells me how strong it is. A separate, deterministic policy engine takes that read and decides what happens next. Two layers, two jobs, never mixed.
-
-Then I went one step further, because deciding case-by-case felt incomplete. If a merchant keeps losing disputes for the same reason every month, a system that only outputs "CONCEDE" on each individual case is missing the actual story. So Abstain doesn't stop at the dispute — it climbs to *why this merchant keeps failing*, then up again to *why the whole portfolio is bleeding money*, and tells you which one it is.
+[![ci](https://github.com/cherry51015/Abstain/actions/workflows/ci.yml/badge.svg)](https://github.com/cherry51015/Abstain/actions/workflows/ci.yml)
+· Python · FastAPI · PostgreSQL · SQLAlchemy/Alembic · httpx/asyncio · NumPy · Prometheus · Docker
 
 ---
 
-## The one-line pitch
+## How it works
 
-**Abstain uses an LLM to understand chargeback evidence, a deterministic engine to decide what to do with it, and a diagnostic layer to explain why merchants — and the whole portfolio — keep losing.**
-
----
-
-## The core idea, visually
-
-```text
-                 ┌────────────────────┐
-                 │   Chargeback Case  │
-                 └──────────┬─────────┘
-                            ▼
-                 ┌────────────────────┐
-                 │  LLM Evidence      │   ← reads, doesn't decide
-                 │  Scorer            │
-                 └──────────┬─────────┘
-                            ▼
-                 ┌────────────────────┐
-                 │  Deterministic     │   ← decides, doesn't guess
-                 │  Decision Engine   │
-                 └──────────┬─────────┘
-                 ┌──────────┼───────────┐
-                 ▼          ▼           ▼
-             CONTEST     CONCEDE     ESCALATE
-                                        │
-                                        ▼
-                              ┌────────────────────┐
-                              │ Human Attention    │
-                              │ Ranking (by EV,    │
-                              │ not FIFO)          │
-                              └────────────────────┘
+```mermaid
+flowchart LR
+    D[Dispute + evidence documents] --> R[Rule extractor]
+    R -->|every relevant document read| F[Facts]
+    R -->|a document the rules can't read| L[LLM extractor<br/>3 samples · JSON schema · quote grounding]
+    L --> F
+    L -.->|timeout / failure| R2[Rules + imputation<br/>degraded, wider uncertainty]
+    R2 --> F
+    F --> M[Win model<br/>per-category logistic regression<br/>30-member bootstrap ensemble]
+    M -->|"P(win) mean ± std"| P[Decision policy<br/>EV maximisation + value of information]
+    P --> C[CONTEST] & X[CONCEDE] & E[ESCALATE → ranked review queue]
+    P --> CF[Counterfactual: which fact would flip it]
 ```
 
-That third outcome — **ESCALATE** — is the whole philosophy of this project in one word. Most systems are built to always output an answer. I wanted a system honest enough to say "I don't know enough here, get a person." A model that can abstain is more trustworthy than one that's confidently wrong.
-
----
-
-## Three layers of intelligence, not one
-
-Most chargeback tools stop at the dispute. Abstain climbs the whole ladder.
-
-```text
-                       ABSTAIN
-                          │
-         ┌────────────────┼────────────────┐
-         ▼                ▼                ▼
-     DISPUTE           MERCHANT          PORTFOLIO
-     What do we do     Why is THIS       Why are we
-     with this case?   merchant          losing overall?
-                        failing?
-         │                │                │
-         └────────────────┼────────────────┘
-                          ▼
-                  ACTIONABLE INSIGHT
-```
-
-**Level 1 — Dispute.** Standard operational decision. Evidence in, decision out, in real time.
-
-**Level 2 — Merchant.** A merchant can have a perfectly normal overall chargeback rate and still be quietly bleeding money from one specific, repeated weakness:
-
-```text
-Merchant A
-────────────────────────────
-Primary weakness:      Customer communication evidence
-Loss concentration:    7 of 10 losses
-Most affected reason:  Fraud / unauthorized dispute
-```
-
-Benchmarked against the portfolio, because a raw number doesn't tell you if it's a *them* problem or an *us* problem:
-
-```text
-                    Merchant A     Portfolio
-──────────────────────────────────────────────
-Loss rate              43%             41%
-Communication gap      70%             30%
-```
-
-Merchant A's overall loss rate is basically average. Their communication gap is more than double the portfolio's. That's not noise — that's a specific, fixable operational problem unique to this merchant.
-
-**Level 3 — Portfolio.** If the same evidence gap shows up across multiple *unrelated* merchants, it's stopped being a merchant problem — it's systemic:
-
-```text
-PORTFOLIO LOSS ANALYSIS
-────────────────────────────────────
-Customer communication      7 losses
-Missing supporting evidence 5 losses
-Delivery verification       4 losses
-```
-
-If "customer communication" keeps topping the list across merchants who otherwise have nothing in common, the fix isn't any single merchant's process — it's *our* evidence-collection pipeline. That's a different fix, and a more valuable insight than "contest more disputes."
-
-```text
-Individual dispute → Why did THIS case fail?
-        ↓
-Merchant           → Why does THIS merchant repeatedly fail?
-        ↓
-Portfolio          → Why do MULTIPLE merchants share the same failure?
-        ↓
-Systemic intervention
-```
-
----
-
-## Why Abstain beats a naive binary decision system
-
-A binary contest/concede system has to pick a side even when it shouldn't. Here's what that costs you, using the same three cases as the actual engine:
-
-**Scenario 1 — Conflicting evidence.** Merchant's transaction record says one thing, the customer's photos say another. A binary system thresholds on P(win) anyway and picks a side — confidently wrong roughly as often as it's confidently right, because the underlying signal genuinely doesn't support a call. Abstain checks the `conflicting_evidence` flag before it ever looks at expected value, and escalates outright: *"Evidence signals point in different directions — escalating regardless of EV, since an automated evidence draft could misrepresent the case."* It's not smarter about the evidence. It's honest about not being able to be smart about it.
-
-**Scenario 2 — High-value, genuinely uncertain.** A ₹15,000+ dispute where the evidence is thin in both directions. A binary system with a 50% threshold either contests (and eats the ops cost + arbitration fee if it loses) or concedes (and leaves real money on the table if it would've won) — and at this dollar amount, either mistake is expensive. Abstain's self-consistency sampling catches the disagreement across repeated LLM calls, lands in LOW confidence, and routes it to a human — who gets the case *with* the reasoning already attached, not a blank slate.
-
-**Scenario 3 — Repeat dispute against a merchant near their chargeback-rate threshold.** Looks profitable in isolation (P(win) is fine, amount clears ops cost). A binary system that only sees this one case says CONTEST. Abstain applies the repeat-dispute cost multiplier (arbitration fees run higher) *and* the portfolio risk penalty (this merchant is close enough to their threshold that one more contest carries downstream risk), and the combined EV flips the decision to CONCEDE — a call a single-case system structurally cannot make, because it doesn't know the merchant's portfolio position exists.
-
-None of these are edge cases I hand-picked to look good — they're the exact three gates (`conflicting_evidence`, confidence-driven escalation, portfolio-aware EV) already live in `decision_engine.py`. Try them yourself on the live demo.
-
----
-
-## Under the hood: the design decisions I actually had to make
-
-### 1. Hybrid retrieval — reused knowledge, not reinvented code
-
-I'd built hybrid retrieval (BM25 + dense/FAISS) before, on a legal AI assistant I worked on earlier. Reason codes and evidence requirements in chargeback disputes are short, keyword-heavy, and highly specific — "13.1," "not as described," exact policy phrasing. Pure dense retrieval is great at semantic similarity but genuinely bad at exact-term matching; pure BM25 is the opposite. Instead of picking one, I combined BM25 for exact reason-code/policy-term matches with FAISS for semantic similarity across evidence descriptions — and carried the *pattern* over from my earlier project rather than starting from scratch. Different domain, same underlying retrieval problem, so I reused the understanding, not the code.
-
-### 2. Self-consistency for uncertainty, not the model's self-reported confidence
-
-I almost just asked the LLM "how confident are you, 0 to 1?" and used that directly. Killed that fast — LLM self-reported confidence is notoriously miscalibrated, it just *sounds* authoritative. Instead I sample the model multiple times at non-zero temperature on the same case and measure how much the evidence-strength scores disagree:
-
-```text
-Low disagreement:            High disagreement:
-0.82, 0.79, 0.84              0.84, 0.51, 0.23
-      ↓                              ↓
-Lower uncertainty              Higher uncertainty
-      ↓                              ↓
-Proceed automatically          Route to human
-```
-
-This adds token cost and latency, but gives the engine a practical disagreement signal. It's explicitly treated as a **disagreement proxy**, not a calibrated statistical confidence interval.
-
-### 3. The LLM never executes the decision — full stop
-
-The LLM's output is a strict, schema-validated JSON object: evidence strength, key gaps, reasoning. Nothing else. It never sees dispute economics, never sees the deadline, never sees the decision thresholds. `decision_engine.py` has **zero import of any LLM client** — that's not a design-doc claim, it's a fact about the dependency graph you can check yourself.
-
-```text
-EV(contest) = P(win) × dispute_amount − operating_cost − portfolio_risk_penalty
-EV(concede) = 0
-```
-
-**Why I accepted the extra plumbing:** a financial decision needs to be reproducible and debuggable without interrogating a model's reasoning trace every time something goes wrong. Same inputs, same output, every time — non-negotiable for anything touching money.
-
-### 4. Portfolio-aware risk, not per-dispute isolation
-
-A dispute doesn't happen in a vacuum. A merchant sitting at 0.41% against a 0.45% chargeback-rate threshold gets treated more conservatively than one sitting at 0.12%, because contesting one more marginal case has downstream risk beyond that single dispute's dollar value.
-
-### 5. Repeat-dispute cost multiplier
-
-Handling a dispute isn't a flat cost — repeat/arbitration disputes cost more to process. I built an explicit multiplier instead of assuming every contest is priced the same. Small detail, but it's the difference between a toy model and something that reflects real ops economics.
-
-### 6. Counterfactual evidence — a diagnosis, not just a verdict
-
-Every ESCALATE or CONCEDE comes with: *what specific missing evidence would flip this decision?*
-
-```text
-Current decision:  CONCEDE
-Missing evidence:  Customer communication log
-Counterfactual:    If obtained and evidence strength crosses
-                   the threshold → decision may flip to CONTEST
-```
-
-I reused the actual `decide()` function to compute this — the counterfactual just calls it again with one field perturbed — so the "what-if" logic can never silently drift out of sync with the real decision logic.
-
-### 7. EV-ranked human attention, not FIFO
-
-Escalated cases get ranked by potential value, not arrival order. The point isn't removing humans from the loop — it's making sure their limited time goes to the case where a human decision actually moves the needle.
-
-### 8. Fail loud about failing, never fail silently
-
-Groq rate limits happen. APIs go down. When the LLM call fails after retries, the system falls back to a conservative structural heuristic based on evidence completeness — and tags the result `source: "fallback_heuristic"`. It never pretends a degraded result came from the full pipeline.
-
-Don't have a Groq key handy? The system runs entirely on this fallback path automatically — you can test the whole decision engine end to end without spending a single API call.
-
----
-
-## Architecture
-
-```text
-Abstain/
-├── app/
-│   ├── main.py                      # FastAPI entrypoint
-│   ├── models.py                    # Pydantic schemas
-│   ├── db.py                        # SQLAlchemy models + session
-│   ├── llm_client.py                # provider-agnostic LLM wrapper
-│   ├── retrieval/
-│   │   ├── hybrid_search.py         # BM25 + FAISS retriever
-│   │   └── index_builder.py
-│   ├── graph/
-│   │   ├── pipeline.py              # LangGraph orchestration
-│   │   ├── nodes.py
-│   │   └── state.py
-│   ├── engine/
-│   │   ├── evidence_scorer.py       # LLM evidence assessment + self-consistency
-│   │   ├── decision_engine.py       # deterministic EV-based policy
-│   │   ├── portfolio.py             # merchant risk adjustment
-│   │   ├── attention_ranking.py     # EV-ranked escalation queue
-│   │   └── counterfactual.py        # "what evidence flips this?"
-│   └── reporting/
-│       └── portfolio_intelligence.py # merchant + portfolio root-cause reports
-├── dataset/
-│   ├── generate_dataset.py          # seeded, reproducible synthetic data
-│   ├── reason_codes.json
-│   ├── merchants.json
-│   └── disputes.json
-├── eval/
-│   ├── run_eval.py
-│   └── eval_report.md
-├── tests/
-│   ├── test_decision_engine.py
-│   ├── test_counterfactual.py
-│   └── test_portfolio_pairs.py
-├── frontend/                        # console (deployed to Vercel)
-├── Dockerfile / docker-compose.yml
-└── requirements.txt
-```
-
-**Pipeline flow (LangGraph state machine):**
-
-```text
-Dispute in
-   ↓
-Retrieve case context (hybrid BM25 + FAISS)
-   ↓
-LLM evidence assessment (+ self-consistency sampling)
-   ↓
-Deterministic decision (EV + deadline + portfolio risk)
-   ↓
-CONTEST / CONCEDE / ESCALATE
-   ↓
-Counterfactual explanation
-   ↓
-Merchant + portfolio intelligence aggregation
-   ↓
-Human attention ranking (for ESCALATE queue)
-```
-
----
-
-## Evaluation — methodology and results
-
-I built the eval harness specifically to catch the failure modes a plain accuracy number hides.
-
-**How I score a three-way decision as a binary classifier:**
-
-* Ground truth "should contest" = the dispute was actually won
-* Ground truth "should concede" = the dispute was actually lost
-* **ESCALATE is excluded from precision/recall on purpose.** It's the abstention mechanism working as designed, not a missed prediction — it's reported separately as the escalation rate.
-
-**Cost accounting, not just accuracy:**
-
-* False-positive cost: ops cost spent contesting a case that was actually lost
-* False-negative cost: recoverable amount left on the table by conceding a case that was actually winnable
-* Decision-boundary experiments track how changing the abstention threshold affects precision, recall, FP cost, and escalation rate
-
-### Most recent run
-
-**57 cases, 56 scored**
-
-```text
-TP = 14    FP = 11
-FN = 16    TN = 11
-
-Precision = 0.56
-Recall    = 0.467
-Escalation rate ≈ 7%
-```
-
-### Decision-boundary experiment
-
-To test whether the engine should be more conservative around medium-confidence decisions, I widened the EV margin from **0.25× → 0.35×**:
-
-```text
-                           margin=0.25      margin=0.35
-Precision                     0.560            0.632
-Recall                        0.467            0.429
-FP cost                       ₹7,970           ₹5,000
-Escalation rate                  7%              18%
-```
-
-The wider margin increased precision from **56.0% → 63.2%** and reduced false-positive cost by roughly **37%**, while increasing the number of cases deliberately handed to humans.
-
-The change moved 6 cases from auto-decision into ESCALATE: **4 former false positives and 2 former true positives**. That demonstrates the intended tradeoff — the engine becomes more selective about automated decisions rather than forcing uncertain cases through.
-
-**The important metric for Abstain is therefore not "contest everything" recovery.** The project is specifically designed to trade some automatic decisions for safer, more trustworthy automation when the evidence is uncertain.
-
-### Why economics, not just accuracy
-
-Contesting a ₹500 dispute that should've been conceded and conceding a ₹10,000 dispute that could've been won are not the same mistake.
-
-Plain accuracy treats them identically.
-
-This harness doesn't.
-
----
-
-## Running it locally
+| Stage | What it does | Where |
+|---|---|---|
+| Extraction | Rules first; the LLM is called only when a document that should answer a relevant fact exists but the rules could not read it. The LLM's answers must quote the documents verbatim or they are discarded. | [`extraction/`](app/extraction) |
+| Estimation | Facts → P(win). Uncertainty is Monte Carlo over *LLM samples × ensemble members*, plus imputation of facts no extractor could read. | [`scoring/win_model.py`](app/scoring/win_model.py) |
+| Decision | Pure function of the estimate and the case economics. Imports nothing from the AI side. | [`engine/decision_engine.py`](app/engine/decision_engine.py) |
+| Diagnosis | Three levels: *this* dispute (what evidence would flip it), *this* merchant (its weakness benchmarked against the rest of the portfolio), the portfolio (gaps shared by separate merchants). | [`engine/counterfactual.py`](app/engine/counterfactual.py), [`insights.py`](app/insights.py) |
+| Service | Async HTTP API, append-only evaluations with a step-by-step audit trail, idempotency keys, human review, outcome recording, calibration monitoring. | [`api/`](app/api), [`repository.py`](app/repository.py) |
+
+## Three levels of diagnosis
+
+A decision alone does not tell anyone what to fix. Abstain explains at three levels.
+
+**1. This dispute: what would flip it?** Every CONCEDE or ESCALATE comes with a ranked checklist of every *minimal*
+evidence set that would turn it into CONTEST, with its rupee impact and what it takes. It is computed by re-running
+the real model and policy with facts changed (no LLM calls, no separate what-if logic to drift out of sync). For
+the ₹40,000 card-not-present fraud dispute in the console's examples, whose authorization record the rules could
+not read, it returns:
+
+| evidence | what it takes | P(win) after | EV gain |
+|---|---|---|---|
+| `avs_cvv_match` | probably already in the documents; confirm | 46% | +₹7,560 |
+| `ip_consistent_with_cardholder` | probably already in the documents; confirm | 45% | +₹7,117 |
+| `delivery_confirmed` | collect it | 42% | +₹6,067 |
+
+Each fact is typed by why it is not favourable today:
+- *missing*: go and collect it
+- *unread*: it may already be in a document
+- *adverse*: the documents say no, so the fix is operational, not more evidence
+
+**2. This merchant: why does it keep losing?** Each merchant's primary weakness is benchmarked against the *rest*
+of the portfolio with a two-proportion z-test, so a raw rate is never mistaken for a merchant problem:
+
+> **`signed_by_cardholder`** was weak in **32 of 35** losses where it mattered. Weak in 88% of this merchant's
+> disputes vs 49% for the rest of the portfolio (z = 5.84): **merchant-specific**.
+
+**3. The portfolio: why are we losing?** A fact missing in most disputes of several separate merchants, *and*
+whose absence measurably raises the loss rate, is systemic:
+
+> **`prior_undisputed_orders`** is missing in 80% of relevant disputes across 8 merchants, and disputes without it
+> lose 69% of the time vs 40% with it: fix the shared evidence pipeline, not individual merchants.
+
+These two outputs come from [`eval/PORTFOLIO_REPORT.md`](eval/PORTFOLIO_REPORT.md), produced by
+[`scripts/portfolio_demo.py`](scripts/portfolio_demo.py) (it also runs in CI):
+- 1,200 disputes with **planted** process problems go through the real HTTP API: evaluate, then record the outcome.
+- The reports must recover exactly the planted problems and nothing else.
+- Result: 4/4 checks pass. Both merchant-specific problems and the systemic gap are found, with zero false alarms.
+
+Two statistical traps the analysis avoids, both caught while building it:
+- **Conditioning on losses.** Measuring weakness only among lost disputes makes every fact look weak, because
+  losing cases are weak cases. Rates are measured over all disputes.
+- **Confounding.** A delivery signature cannot exist when nothing was delivered. Counting "no signature" on failed
+  deliveries blamed signatures for losses that delivery failure caused. Facts are only counted where they are
+  possible ([`FACT_PREREQUISITES`](app/domain.py)).
+
+**Audit trail.** Every evaluation stores each pipeline step with timings:
+- which documents the rules could not read, and why the LLM was or was not called
+- samples used, ungrounded answers discarded, and tokens spent
+- what was imputed, the P(win) spread, the decision arithmetic, and the counterfactual
+
+## Results
+
+From [`eval/REPORT.md`](eval/REPORT.md): 250 test disputes per split, 95% paired bootstrap CIs. *Oracle* = the
+true facts (upper bound for extraction), *rules* = the deterministic extractor.
+
+**Decisions (familiar document wording)**
+
+| policy | expected net (₹) | vs contest-everything |
+|---|---|---|
+| concede everything | 0 | −428,698 |
+| contest everything | 428,698 | — |
+| **Abstain** (rules extraction) | **479,777** | **+51,079 (+12%)**, CI [+41,332, +60,932] |
+| best possible (contest exactly when true EV > 0) | 481,386 | +52,688 |
+
+Abstain recovers **99.7%** of the best achievable value. An earlier version of this project lost ₹55k against the
+same contest-everything baseline; the design decisions below are what changed.
+
+**Probabilities and uncertainty**
+
+| | AUC | Brier | ECE | 90%-interval coverage (target 0.90) |
+|---|---|---|---|---|
+| familiar wording | 0.885 | 0.136 | 0.031 | **0.90** |
+| unfamiliar wording, rules only | 0.596 | 0.236 | 0.083 | **0.87** |
+
+**Robustness to unfamiliar wording** (`test_shifted`, phrasing written after the rules were frozen)
+
+| | rules extraction accuracy | Abstain vs contest-everything |
+|---|---|---|
+| familiar wording | 99.7% | +₹51,079 |
+| unfamiliar wording, rules only | **8.7%** | +₹26,160, CI [+15,160, +36,747] |
+
+The rules collapse on wording they were not written for, but the damage is contained: facts the rules could not
+read are imputed, which widens the uncertainty and routes the unreadable cases (12%) to a human instead of
+guessing. Without imputation the same setting gained only +₹8k, with a CI crossing zero.
+
+**LLM extraction:** the LLM and cascade systems on the same splits are still running (the free-tier provider caps
+tokens per day; responses are cached so the run resumes). The cascade's measured property so far: on familiar
+wording it made **zero LLM calls**, because the rules read every document.
+
+## Design decisions (and what I measured)
+
+**1. The LLM extracts facts; it does not score the case.**
+The first version asked the LLM for an "evidence strength" number. But it only showed the LLM a list of which
+evidence types were present, so the number was a re-derivation of a count that one line of Python computes. Now
+the LLM answers nine yes/no/unknown questions about the actual document text ("was it signed by the cardholder?").
+Facts are checkable against labels, so extraction accuracy is measured on its own, separately from model error
+and outcome noise.
+
+**2. Hallucinations are blocked structurally, not by prompting.** Every yes/no must come with a verbatim quote. If
+the quote is not in the documents, the answer becomes `unknown` and is counted
+([`parse_and_ground`](app/extraction/llm_extractor.py)). Documents are customer-supplied, so they are fenced as
+untrusted data. The grounding check also limits prompt injection: an injected instruction can only make the model
+cite text that really exists.
+
+**3. Rules first, LLM for the long tail.** The rule extractor reads the phrasing it was written for almost
+perfectly and fails on anything else, and it usually fails by returning "unknown" rather than a wrong answer. So
+the cascade only pays for LLM calls where the rules could not read a document that exists.
+
+**4. Uncertainty that means something.** P(win) comes from a 30-member bootstrap ensemble of per-category logistic
+regressions, shipped as reviewable JSON coefficients (no pickle). The spread combines disagreement between LLM
+self-consistency samples and disagreement between ensemble members. When the rules cannot read a document and no
+LLM is available, the missing facts are *imputed from training priors*, not silently treated as neutral. On
+unfamiliar phrasing this turned the rules-only system's gain over contest-all from not significant (+₹8k, CI crossing
+zero) into significant (+₹26k).
+
+**5. Escalation is priced, not thresholded.** ESCALATE is the third action in one expected-value maximisation. With
+X = P(win)·amount − cost, a reviewer who resolves the uncertainty is worth E[max(X,0)] − max(E[X],0): the value of
+information, which has a closed form under a Normal approximation. The case escalates when that exceeds the review
+cost. The review queue is ranked by the same quantity, not by arrival order. Merchant risk appetite changes how
+much oversight they buy (the review-cost multiplier), and nothing else.
+
+**6. Contradictory evidence widens uncertainty instead of forcing escalation.** An earlier version escalated every contradiction.
+The eval showed that cost more in review time than it recovered, so a contradiction now raises the uncertainty
+floor and the value-of-information test decides.
+
+**7. Things I removed, and why.**
+- *The "chargeback-ratio penalty" on contesting.* Winning a representment does not remove a dispute from the card
+  network's monitoring ratio (e.g. Visa VAMP counts it on receipt), so the penalty charged contesting for a cost it
+  does not have. Ratio proximity now appears in the insights report, where it belongs: as a prevention signal.
+- *Hybrid BM25 + FAISS retrieval.* It searched eight reason codes, which arrive structured from the network anyway.
+  Removing it took torch, FAISS and sentence-transformers out of the runtime image, which is what the old
+  free-tier deployment was struggling to run.
+- *LangGraph.* The pipeline is linear; a typed function call chain is easier to test and reason about.
+
+**8. Reliability.**
+- The LLM client is written directly on httpx, so the behaviour is explicit and tested ([`llm_client.py`](app/extraction/llm_client.py)):
+  - per-request timeouts
+  - retries only on retryable statuses, with exponential backoff, full jitter and `Retry-After` honoured
+  - a shared concurrency cap and client-side request pacing
+  - a content-addressed response cache, which also makes evals resumable
+- Each evaluation has an overall latency budget. On timeout or failure it falls back to rules with imputation, is
+  flagged `degraded`, and is counted in Prometheus.
+- Output tokens turned out to be the binding provider limit, so the prompt omits unaddressed facts and asks for
+  compact JSON. That halved output tokens per call.
+
+**9. Data model built for audit and feedback.**
+- Evaluations are append-only. Each stores its input snapshot, merchant snapshot and model version.
+- Money is `Numeric(12,2)`. Schema changes go through Alembic, and CI checks that migrations and models don't drift,
+  on real Postgres.
+- Reviewers resolve escalations (`POST /review`), and network outcomes are recorded later (`POST /outcome`). Those
+  outcomes drive root-cause reports (*missing* evidence vs *adverse* evidence need different fixes) and live
+  calibration monitoring, which alerts when ECE drifts.
+- `POST /evaluate` supports Stripe-style `Idempotency-Key`: the same key and body replays the result, and the same
+  key with a different body returns 409. It is race-safe.
+
+## Evaluation methodology
+
+Real chargeback data with evidence documents and outcomes is not public, so
+[`scripts/generate_dataset.py`](scripts/generate_dataset.py) builds a synthetic dataset with **known truth at every
+stage**:
+- latent facts → rendered documents (varied phrasing, negations, near-miss names, amount mismatches) → outcome
+  drawn from the facts the documents express
+- train / val / test (1000 / 250 / 250) share one phrasing family
+- **test_shifted** uses a held-out phrasing bank written *after* the rule extractor was frozen, to measure
+  robustness to wording nobody tuned against
+
+[`eval/run_eval.py`](eval/run_eval.py) scores each stage separately:
+- **Extraction:** per-fact accuracy.
+- **P(win):** Brier, ECE and AUC, plus MAE against the generator's true probability, which isolates error caused by
+  extraction.
+- **As a classifier:** precision and recall (positive = CONTEST, truth = the dispute was won), with false-positive
+  cost (contest cost wasted on losses) and false-negative cost (winnable amounts conceded). ESCALATE is excluded and
+  reported as a rate, because abstaining is not a wrong prediction.
+- **Decision boundary:** a sweep of the review cost, the knob that sets how readily the engine abstains. Cheaper
+  review → more escalation → higher precision and lower false-positive cost. For example, on the oracle facts
+  precision goes 0.58 → 0.85 and FP cost ₹34k → ₹4k as review cost goes from never-escalate to free.
+- **Policy:** net rupees against baselines, with paired bootstrap 95% CIs. Policies are scored both *in expectation*
+  (using the true P(win), which removes coin-flip noise) and *realized* (using sampled outcomes, like a backtest).
+  Escalated cases pay the review cost and are then decided by a reviewer who knows the true P(win). That is a
+  best-case human, so `abstain_no_escalation` is reported alongside to isolate what escalation itself adds.
+
+**Limitations, stated plainly.**
+- The documents are synthetic, template-based text, so absolute accuracies will not transfer to real evidence. The
+  *comparisons* (rules vs LLM under distribution shift, cascade cost, escalation value) are what the eval is for.
+- The LLM run uses a free-tier model on 100 cases per split because of rate limits, so its CIs will be wider.
+- The win model is trained on ground-truth facts standing in for analyst-reviewed history.
+
+## API
+
+| Method | Path | |
+|---|---|---|
+| POST | `/v1/disputes/evaluate` | Evaluate a dispute. Honours `Idempotency-Key`. `X-API-Key` is required if configured. |
+| GET | `/v1/disputes/{case_id}` | Latest evaluation plus full history |
+| GET | `/v1/escalations?limit&offset` | Open escalations ranked by net value of review |
+| POST | `/v1/disputes/{case_id}/review` | Human resolves an escalation (409 if not escalated or already reviewed) |
+| POST | `/v1/disputes/{case_id}/outcome` | Record the network's resolution |
+| GET | `/v1/reports/portfolio`, `/v1/reports/merchants/{id}` | Merchant weaknesses benchmarked against the portfolio, systemic gaps, missing vs adverse evidence, realized economics |
+| GET | `/v1/monitoring/calibration` | Live Brier/ECE of P(win) on resolved cases, with drift alert |
+| GET | `/health`, `/ready`, `/metrics` | Liveness, readiness (DB + model), Prometheus |
+
+Interactive docs are at `/docs`. A dependency-free console is in [`frontend/index.html`](frontend/index.html).
+
+## Running it
 
 ```bash
-pip install -r requirements.txt
-
-# .env
-GROQ_API_KEY=your_api_key
-
-uvicorn app.main:app --reload --port 8000
-# → http://127.0.0.1:8000/docs
+pip install -r requirements-dev.txt
+cp .env.example .env              # GROQ_API_KEY optional: without it the service runs rules-only
+alembic upgrade head
+uvicorn app.main:app --reload     # http://localhost:8000/docs
+python -m http.server 5173 -d frontend   # console at http://localhost:5173
 ```
-
-No `GROQ_API_KEY`? Leave it blank — the system runs entirely on the fallback heuristic, so you can exercise the full pipeline without an API call.
 
 ```bash
-# Evaluation
-python eval/run_eval.py        # → eval/eval_report.md
-
-# Tests
-pytest
+docker compose up --build         # API + Postgres, migrations run on start
+pytest                            # ~100 tests: unit, property-based, HTTP, migrations
+python eval/run_eval.py           # offline eval (oracle + rules), no API calls
+python eval/run_eval.py --llm --limit 100   # adds LLM + cascade (uses API quota; cached and resumable)
+python scripts/portfolio_demo.py   # levels 2-3: planted-problem check through the real API
+python scripts/generate_dataset.py && python scripts/train_win_model.py   # rebuild data + model
 ```
 
----
+## Layout
 
-## Tech stack
+```text
+app/
+  domain.py            facts, documents, cases: the contract between layers
+  extraction/          rules · LLM client (retries, pacing, cache) · grounded LLM extractor · sample aggregation
+  scoring/             win model (bootstrap ensemble, imputation) · forecast metrics
+  engine/              decision policy (EV + value of information) · counterfactuals · conflict rules
+  service.py           extraction modes, cascade, degraded fallback
+  api/ db.py repository.py insights.py observability.py main.py
+alembic/               migrations
+scripts/               dataset generator, model training
+eval/                  evaluation harness + REPORT.md
+tests/                 pytest + hypothesis
+```
 
-**Backend** — Python, FastAPI, Pydantic, PostgreSQL, Docker
-**Retrieval** — hybrid BM25 + FAISS
-**AI/LLM** — LangChain, LangGraph orchestration, Groq, self-consistency uncertainty estimation, strict structured-output validation
-**Eval** — Python
-**Deployed on** — Vercel (frontend), Render (API)
+## What I would do next
 
----
-
-## What I'd build next
-
-* Calibrate uncertainty properly with a larger labeled validation set instead of relying on the disagreement proxy alone
-* Historical-outcome learning to improve win-probability estimates over time
-* Merchant-specific policy configuration instead of one global threshold set
-* Reviewer feedback loop so human ESCALATE decisions actually improve the model
-* What-if portfolio simulation before rolling out policy changes
-
----
-
-## The thing I actually believe about this project
-
-Don't automate the decision just because you can automate the prediction.
-
-In a high-stakes workflow, the best AI system isn't the one that makes the most calls on its own. It's the one that knows the difference between when to act, when not to, and when to hand it to a person — and on top of that, tells you *why* you keep losing in the first place.
+- Replace synthetic documents with a small hand-labelled set of real, anonymised evidence and re-run the same harness.
+- Move evaluation off the request path (a queue and workers) so long LLM budgets never hold an HTTP request open.
+- Recalibrate the win model from recorded outcomes when the calibration monitor alerts, behind a shadow-evaluation gate.

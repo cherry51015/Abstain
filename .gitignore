@@ -8,3 +8,8 @@ __pycache__/
 .vscode/
 .idea/
 *.log
+# local state
+.cache/
+*.db
+*.sqlite
+!.env.example

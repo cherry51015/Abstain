@@ -209,6 +209,26 @@
     from{ opacity:0; transform:translateY(6px); }
     to{ opacity:1; transform:translateY(0); }
   }
+  .docs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .docs-grid textarea{ font-family:'JetBrains Mono',monospace; font-size:12px; min-height:74px; }
+  .presets{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .presets button{ all:unset; cursor:pointer; font-size:12.5px; padding:6px 12px; border-radius:14px;
+    border:1px solid var(--hairline); color:var(--muted); background:var(--panel-raised); }
+  .presets button:hover{ color:var(--text); border-color:var(--accent); }
+  .kv{ display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--hairline);
+    border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden; margin-top:14px; }
+  .kv > div{ background:var(--panel-raised); padding:10px 12px; }
+  .kv .k{ color:var(--muted); font-size:11px; margin-bottom:3px; }
+  .kv .v{ font-family:'JetBrains Mono',monospace; font-size:13px; }
+  .reasons{ margin:14px 0 0; padding-left:18px; color:var(--text); line-height:1.65; font-size:13px; }
+  .fact-yes{ color:var(--contest); } .fact-no{ color:var(--concede); } .fact-unknown{ color:var(--muted); }
+  .footnote{ color:var(--muted); font-size:11.5px; font-family:'JetBrains Mono',monospace; margin-top:12px; }
+  .inline-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .inline-actions input{ width:160px; }
+  button.small{ all:unset; cursor:pointer; font-size:12.5px; padding:6px 12px; border-radius:var(--radius);
+    border:1px solid var(--hairline); background:var(--panel-raised); }
+  button.small:hover{ border-color:var(--accent); }
+  @media (max-width: 820px){ body{ flex-direction:column; } .rail{ width:auto; } .grid2,.docs-grid,.kv{ grid-template-columns:1fr; } main{ padding:24px 16px; } }
 </style>
 </head>
 <body>
@@ -216,133 +236,82 @@
 <div class="rail">
   <div>
     <div class="wordmark">Abstain</div>
-    <div class="tagline">The LLM drafts and reads.<br>A deterministic engine decides.</div>
+    <div class="tagline">The LLM reads the evidence.<br>A calibrated model estimates.<br>A deterministic policy decides.</div>
   </div>
   <nav>
     <div class="nav-item">
       <button data-view="evaluate" class="active"><span class="nav-step">1</span>Evaluate a dispute</button>
-      <div class="nav-hint">Start here — run one case through the engine.</div>
+      <div class="nav-hint">Paste evidence, get a priced decision.</div>
     </div>
     <div class="nav-item">
-      <button data-view="escalations"><span class="nav-step">2</span>Escalation queue</button>
-      <div class="nav-hint">See what the engine wouldn't decide alone.</div>
+      <button data-view="escalations"><span class="nav-step">2</span>Review queue</button>
+      <div class="nav-hint">Cases where a human is worth the cost.</div>
     </div>
     <div class="nav-item">
-      <button data-view="reports"><span class="nav-step">3</span>Portfolio intelligence</button>
-      <div class="nav-hint">Find out why disputes keep being lost.</div>
+      <button data-view="reports"><span class="nav-step">3</span>Insights</button>
+      <div class="nav-hint">Why disputes are lost; is P(win) still calibrated?</div>
     </div>
   </nav>
   <div class="rail-footer">
     <div class="status-row"><span class="dot" id="statusDot"></span><span id="statusText">checking API…</span></div>
-    <input class="api-input" id="apiBase" value="https://abstain-api.onrender.com" spellcheck="false">
+    <input class="api-input" id="apiBase" value="https://abstain-api.onrender.com" spellcheck="false" aria-label="API base URL">
+    <input class="api-input" id="apiKey" placeholder="X-API-Key (if required)" spellcheck="false" aria-label="API key">
   </div>
 </div>
 
 <main>
 
-  <!-- ===== EVALUATE ===== -->
   <section class="view active" id="view-evaluate">
     <h1>Evaluate a dispute</h1>
-    <p class="sub">Runs the full pipeline: retrieval → evidence scoring → the deterministic decision engine. Nothing here is scripted — this calls your real API.</p>
+    <p class="sub">Documents go through extraction (rules first, the LLM only for what the rules can't read), a calibrated
+      win-probability model, and an expected-value policy. ESCALATE happens only when a human review is worth more than it costs.</p>
 
     <div class="decision-strip">
-      <div><div class="dlabel CONTEST">Contest</div><div class="ddesc">Evidence and economics clear the bar — the engine acts on its own.</div></div>
-      <div><div class="dlabel CONCEDE">Concede</div><div class="ddesc">Contesting wouldn't pay off, or there's no time left to respond.</div></div>
-      <div><div class="dlabel ESCALATE">Escalate</div><div class="ddesc">Too uncertain to decide automatically — a person should look.</div></div>
+      <div><div class="dlabel CONTEST">Contest</div><div class="ddesc">Expected recovery beats the contest cost, and a review would not change that.</div></div>
+      <div><div class="dlabel CONCEDE">Concede</div><div class="ddesc">Contesting loses money in expectation, or there is no time left.</div></div>
+      <div><div class="dlabel ESCALATE">Escalate</div><div class="ddesc">The value of a human resolving the uncertainty exceeds the review cost.</div></div>
     </div>
 
     <div class="panel">
-      <h2>Case details</h2>
+      <h2>Examples</h2>
+      <div class="presets">
+        <button data-preset="strong">Strong not-received defence</button>
+        <button data-preset="unreadable">Fraud case, unfamiliar auth record</button>
+        <button data-preset="weak">Substituted item, no refund offered</button>
+      </div>
       <div class="grid2">
-        <div class="field"><label>Case ID</label><input type="text" id="f_case_id" value="demo_001"></div>
-        <div class="field"><label>Merchant</label>
-          <select id="f_merchant_id">
-            <option value="mch_01">mch_01 — Apex Electronics (aggressive)</option>
-            <option value="mch_02">mch_02 — Lumina Boutique (conservative)</option>
-            <option value="mch_03">mch_03 — Northbridge SaaS (aggressive)</option>
-            <option value="mch_04">mch_04 — Curio Home Decor (conservative)</option>
-            <option value="mch_05">mch_05 — Vantage Fitness Gear (moderate)</option>
-            <option value="mch_06">mch_06 — Zenith Digital Courses (conservative)</option>
-            <option value="mch_07">mch_07 — Ferro Industrial Supplies (aggressive)</option>
-            <option value="mch_08">mch_08 — Pinnacle Mobile Accessories (moderate)</option>
-          </select>
-        </div>
-        <div class="field"><label>Reason code</label>
-          <select id="f_reason_code">
-            <option value="13.1">13.1 — Merchandise Not Received</option>
-            <option value="12.5">12.5 — Incorrect Amount</option>
-            <option value="10.4">10.4 — Fraud, Card-Absent</option>
-            <option value="4853">4853 — Defective / Not as Described</option>
-            <option value="4837">4837 — No Cardholder Authorization</option>
-            <option value="C08">C08 — Goods Not Received (Amex)</option>
-            <option value="F29">F29 — Card Not Present Fraud (Amex)</option>
-            <option value="13.3">13.3 — Not as Described</option>
-          </select>
-        </div>
-        <div class="field"><label>Amount (₹)</label><input type="number" id="f_amount" value="4500"></div>
-        <div class="field"><label>Days left to respond</label><input type="number" id="f_days" value="10"></div>
+        <div class="field"><label for="f_case_id">Case ID</label><input type="text" id="f_case_id"></div>
+        <div class="field"><label for="f_merchant_id">Merchant</label><select id="f_merchant_id"></select></div>
+        <div class="field"><label for="f_reason_code">Reason code</label><select id="f_reason_code"></select></div>
+        <div class="field"><label for="f_amount">Amount (₹)</label><input type="number" id="f_amount" min="1"></div>
+        <div class="field"><label for="f_cardholder">Cardholder name</label><input type="text" id="f_cardholder"></div>
+        <div class="field"><label for="f_days">Days left to respond</label><input type="number" id="f_days" min="0"></div>
       </div>
-      <div class="field">
-        <label>Case flags</label>
-        <div class="checks">
-          <label><input type="checkbox" id="f_repeat"> Repeat / arbitration dispute</label>
-          <label><input type="checkbox" id="f_conflict"> Evidence conflicts internally</label>
-        </div>
-      </div>
-      <div class="field">
-        <label>Present evidence</label>
-        <div class="checks">
-          <label><input type="checkbox" value="delivery_proof" checked> delivery_proof</label>
-          <label><input type="checkbox" value="tracking_number" checked> tracking_number</label>
-          <label><input type="checkbox" value="customer_communication_log"> customer_communication_log</label>
-          <label><input type="checkbox" value="signed_receipt"> signed_receipt</label>
-          <label><input type="checkbox" value="auth_data"> auth_data</label>
-          <label><input type="checkbox" value="ip_geolocation"> ip_geolocation</label>
-        </div>
-      </div>
-      <div class="field">
-        <label>Dispute description (drives retrieval)</label>
-        <textarea id="f_reason_text">Customer says the package never arrived despite tracking showing delivered.</textarea>
-      </div>
-      <button class="primary" id="btnEvaluate">Run decision engine</button>
+      <div class="field"><div class="checks"><label><input type="checkbox" id="f_repeat"> Repeat / arbitration dispute</label></div></div>
+      <label>Evidence documents (leave blank if not available)</label>
+      <div class="docs-grid" id="docs"></div>
+      <div style="margin-top:16px"><button class="primary" id="btnEvaluate">Evaluate</button></div>
       <div class="error" id="evalError" style="display:none;"></div>
     </div>
 
     <div id="resultPanel" style="display:none;"></div>
   </section>
 
-  <!-- ===== ESCALATIONS ===== -->
   <section class="view" id="view-escalations">
-    <h1>Escalation queue</h1>
-    <p class="sub">Every case currently sitting at ESCALATE, ranked by expected value of a human's limited review time — not FIFO, not amount alone.</p>
+    <h1>Review queue</h1>
+    <p class="sub">Open escalations ranked by net value of review (value of information minus review cost), not by arrival order.</p>
     <div class="panel">
       <button class="primary" id="btnLoadEsc" style="margin-bottom:14px;">Refresh queue</button>
-      <div id="escTable">
-        <div class="empty">
-          <div class="empty-title">Queue not loaded yet</div>
-          Click "Refresh queue" to pull the current list. If it comes back empty, that's expected until a case is uncertain enough to trigger ESCALATE — try the "high-value, evidence cuts both ways" scenario on the Evaluate tab, then check back here.
-        </div>
-      </div>
+      <div id="escTable"><div class="empty">Click "Refresh queue".</div></div>
     </div>
   </section>
 
-  <!-- ===== REPORTS ===== -->
   <section class="view" id="view-reports">
-    <h1>Portfolio intelligence</h1>
-    <p class="sub">Root-cause reporting: not "we lost this dispute," but "we keep losing disputes because X is missing."</p>
+    <h1>Insights</h1>
+    <p class="sub">Built from disputes whose network outcome has been recorded. Record outcomes from an evaluation result to populate it.</p>
     <div class="panel">
       <div class="report-controls">
-        <select id="reportScope">
-          <option value="portfolio">Whole portfolio</option>
-          <option value="mch_01">mch_01 — Apex Electronics</option>
-          <option value="mch_02">mch_02 — Lumina Boutique</option>
-          <option value="mch_03">mch_03 — Northbridge SaaS</option>
-          <option value="mch_04">mch_04 — Curio Home Decor</option>
-          <option value="mch_05">mch_05 — Vantage Fitness Gear</option>
-          <option value="mch_06">mch_06 — Zenith Digital Courses</option>
-          <option value="mch_07">mch_07 — Ferro Industrial Supplies</option>
-          <option value="mch_08">mch_08 — Pinnacle Mobile Accessories</option>
-        </select>
+        <select id="reportScope" aria-label="Report scope"><option value="portfolio">Whole portfolio</option></select>
         <button class="primary" id="btnLoadReport">Load report</button>
       </div>
       <div class="report" id="reportOut"><p class="report-p">Select a scope and load a report.</p></div>
@@ -352,243 +321,218 @@
 </main>
 
 <script>
-const $ = sel => document.querySelector(sel);
+const $ = s => document.querySelector(s);
+if(['localhost', '127.0.0.1'].includes(location.hostname)) $('#apiBase').value = 'http://localhost:8000';
+const esc =s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const apiBase = () => $('#apiBase').value.replace(/\/$/, '');
+const inr = n => '₹' + Math.round(Number(n)).toLocaleString('en-IN');
+const DOC_TYPES = ['carrier_record','customer_messages','order_record','fulfilment_record','refund_record','invoice'];
+
+async function api(path, opts = {}){
+  const headers = {'Content-Type':'application/json', ...(opts.headers || {})};
+  const key = $('#apiKey').value.trim();
+  if(key) headers['X-API-Key'] = key;
+  const r = await fetch(apiBase() + path, {...opts, headers});
+  const body = await r.json().catch(() => ({}));
+  if(!r.ok){
+    const detail = Array.isArray(body.detail) ? body.detail.map(d => `${d.loc.slice(1).join('.')}: ${d.msg}`).join('; ') : body.detail;
+    throw new Error(detail || ('HTTP ' + r.status));
+  }
+  return body;
+}
 
 // ---------- nav ----------
-document.querySelectorAll('nav button[data-view]').forEach(btn => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
-});
+document.querySelectorAll('nav button[data-view]').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
 function switchView(name){
   document.querySelectorAll('nav button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
 }
 
-// ---------- health check ----------
-async function checkHealth(){
+// ---------- status + reference data ----------
+async function checkReady(){
   const dot = $('#statusDot'), txt = $('#statusText');
   try{
-    const r = await fetch(apiBase() + '/health');
-    const d = await r.json();
-    if(d.llm_configured){
-      dot.className = 'dot live'; txt.textContent = 'API live · Groq configured';
-    } else {
-      dot.className = 'dot fallback'; txt.textContent = 'API live · fallback heuristic';
-    }
+    const d = await api('/ready');
+    dot.className = 'dot ' + (d.llm_configured ? 'live' : 'fallback');
+    txt.textContent = `API live · ${d.extraction_mode}${d.llm_configured ? '' : ' (no LLM)'}`;
+  }catch(e){ dot.className = 'dot'; txt.textContent = 'API unreachable'; }
+}
+async function loadReference(){
+  try{
+    const ref = await api('/v1/reference');
+    $('#f_merchant_id').innerHTML = ref.merchants.map(m => `<option value="${m.merchant_id}">${m.merchant_id} — ${esc(m.name)} (${m.risk_tolerance})</option>`).join('');
+    $('#f_reason_code').innerHTML = ref.reason_codes.map(r => `<option value="${r.code}">${r.code} — ${esc(r.label)}</option>`).join('');
+    $('#reportScope').innerHTML = '<option value="portfolio">Whole portfolio</option>' +
+      ref.merchants.map(m => `<option value="${m.merchant_id}">${m.merchant_id} — ${esc(m.name)}</option>`).join('');
+    applyPreset('strong');
+    $('#btnEvaluate').disabled = false;
   }catch(e){
-    dot.className = 'dot'; txt.textContent = 'API unreachable';
+    setTimeout(loadReference, 3000);  // API may be cold-starting; keep trying rather than leave empty dropdowns
   }
 }
-checkHealth();
-setInterval(checkHealth, 8000);
+$('#btnEvaluate').disabled = true;
+checkReady(); loadReference(); setInterval(checkReady, 15000);
 
 // ---------- evaluate ----------
+$('#docs').innerHTML = DOC_TYPES.map(t => `<div><label for="doc_${t}">${t}</label><textarea id="doc_${t}"></textarea></div>`).join('');
+
+const PRESETS = {
+  strong: {merchant_id:'mch_01', reason_code:'13.1', amount_inr:6500, cardholder_name:'Priya Nair', days:9, docs:{
+    carrier_record:'Tracking ID: DL482910331\nStatus: DELIVERED on 12-Mar 14:05.\nSigned by: P. Nair',
+    customer_messages:"From customer (13-Mar): Received the box today. I'm still raising a dispute with my bank."}},
+  unreadable: {merchant_id:'mch_05', reason_code:'10.4', amount_inr:40000, cardholder_name:'Rohan Iyer', days:12, docs:{
+    order_record:'Order #44110\nAuth response: address_check=PASS, cvc_check=PASS\nCheckout session from an ISP in Pune; cardholder resides in Pune.\nCustomer since 2021 with 9 fulfilled orders and zero disputes.'}},
+  weak: {merchant_id:'mch_06', reason_code:'13.3', amount_inr:2400, cardholder_name:'Meera Das', days:6, docs:{
+    fulfilment_record:'Stock-out on the listed variant; substituted with a similar model.',
+    refund_record:'No return or refund was offered.',
+    customer_messages:'From customer (02-Apr): Item arrived but it is the older model, not what was advertised.'}},
+};
+function applyPreset(name){
+  const p = PRESETS[name];
+  $('#f_case_id').value = `demo_${name}_${Date.now().toString(36)}`;
+  $('#f_merchant_id').value = p.merchant_id; $('#f_reason_code').value = p.reason_code;
+  $('#f_amount').value = p.amount_inr; $('#f_cardholder').value = p.cardholder_name; $('#f_days').value = p.days;
+  $('#f_repeat').checked = false;
+  DOC_TYPES.forEach(t => $('#doc_' + t).value = p.docs[t] || '');
+}
+document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+
 $('#btnEvaluate').addEventListener('click', async () => {
   const errEl = $('#evalError'); errEl.style.display = 'none';
-  const btn = $('#btnEvaluate'); btn.disabled = true; btn.textContent = 'Running…';
-
-  const present_evidence = Array.from(document.querySelectorAll('#view-evaluate .checks input:checked')).map(c => c.value);
+  const btn = $('#btnEvaluate'); btn.disabled = true; btn.textContent = 'Evaluating…';
   const payload = {
-    case_id: $('#f_case_id').value,
-    merchant_id: $('#f_merchant_id').value,
-    reason_code: $('#f_reason_code').value,
-    dispute_amount_inr: Number($('#f_amount').value),
-    response_deadline_days_left: Number($('#f_days').value),
-    is_repeat_dispute: $('#f_repeat').checked,
-    conflicting_evidence: $('#f_conflict').checked,
-    present_evidence,
-    dispute_reason_text: $('#f_reason_text').value,
+    case_id: $('#f_case_id').value.trim(), merchant_id: $('#f_merchant_id').value, reason_code: $('#f_reason_code').value,
+    amount_inr: Number($('#f_amount').value), cardholder_name: $('#f_cardholder').value.trim(),
+    response_deadline_days_left: Number($('#f_days').value), is_repeat_dispute: $('#f_repeat').checked,
+    documents: DOC_TYPES.map(t => ({doc_type: t, text: $('#doc_' + t).value.trim()})).filter(d => d.text),
   };
-
   try{
-    const r = await fetch(apiBase() + '/disputes/evaluate', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-    });
-    if(!r.ok){ const d = await r.json(); throw new Error(d.detail || ('HTTP ' + r.status)); }
-    const d = await r.json();
-    renderResult(d);
-  }catch(e){
-    errEl.textContent = 'Error: ' + e.message;
-    errEl.style.display = 'block';
-  }finally{
-    btn.disabled = false; btn.textContent = 'Run decision engine';
-  }
+    renderResult(await api('/v1/disputes/evaluate', {method:'POST', body: JSON.stringify(payload),
+      headers: {'Idempotency-Key': payload.case_id + ':' + JSON.stringify(payload).length}}));
+  }catch(e){ errEl.textContent = 'Error: ' + e.message; errEl.style.display = 'block'; }
+  finally{ btn.disabled = false; btn.textContent = 'Evaluate'; }
 });
 
 function renderResult(d){
-  const panel = $('#resultPanel');
-  panel.style.display = 'block';
-
-  const winPct = d.win_probability != null ? Math.round(d.win_probability * 100) : null;
-  const degraded = d.degraded_mode ? '<span style="color:var(--escalate)">· fallback heuristic used (no live LLM)</span>' : '';
-
-  let html = `
+  const panel = $('#resultPanel'); panel.style.display = 'block';
+  const facts = Object.entries(d.facts).filter(([f, v]) => v !== 'unknown' || d.unread_facts.includes(f));
+  const cf = d.counterfactual || {};
+  panel.innerHTML = `
     <div class="panel">
       <div class="verdict">
-        <span class="verdict-action ${d.action || ''}">${d.action || 'ERROR'}</span>
-        <span class="verdict-meta">P(win) ${winPct != null ? winPct + '%' : '—'} · confidence ${d.confidence_label || '—'} ${degraded}</span>
+        <span class="verdict-action ${d.action}">${d.action}</span>
+        <span class="verdict-meta">confidence ${d.confidence} · extraction: ${esc(d.extraction_source)}${d.degraded_reason ? ' · <span style="color:var(--escalate)">degraded: ' + esc(d.degraded_reason) + '</span>' : ''}</span>
       </div>
-      <div class="memo">${(d.memo || 'No decision reached — see audit log below.').replace(/</g,'&lt;')}</div>
-      ${nudgeFor(d.action)}
+      <div class="kv">
+        <div><div class="k">P(win)</div><div class="v">${(d.p_win*100).toFixed(0)}% ± ${(d.p_win_std*100).toFixed(0)}</div></div>
+        <div><div class="k">EV of contesting</div><div class="v">${inr(d.ev_contest_inr)}</div></div>
+        <div><div class="k">Value of a review</div><div class="v">${inr(d.review_value_inr)}</div></div>
+        <div><div class="k">Review cost</div><div class="v">${inr(d.review_cost_inr)}</div></div>
+      </div>
+      <ul class="reasons">${d.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
+      ${cf.note ? `<div class="memo">${esc(cf.note)}</div>` : ''}
+      <div class="inline-actions"><span class="report-p" style="margin:0">Record the network's outcome (feeds Insights):</span>
+        <button class="small" data-outcome="won">Won</button><button class="small" data-outcome="lost">Lost</button>
+        <span id="outcomeMsg" class="report-p" style="margin:0"></span></div>
+      <div class="footnote">evaluation #${d.evaluation_id} · model ${esc(d.model_version)} · ${d.llm_calls} LLM calls · ${d.llm_tokens} tokens · ${d.latency_ms} ms${d.idempotent_replay ? ' · idempotent replay' : ''}</div>
     </div>
-  `;
-
-  if(d.counterfactual_note){
-    html += `
-      <div class="panel">
-        <h2>Counterfactual</h2>
-        <div class="memo" style="font-size:13.5px;">${d.counterfactual_note.replace(/</g,'&lt;')}</div>
-      </div>
-    `;
-  }
-
-  html += `
     <div class="panel">
-      <h2>Audit log</h2>
-      <ul class="auditlog">
-        ${(d.audit_log || []).map(line => `<li>${line.replace(/</g,'&lt;')}</li>`).join('')}
-      </ul>
+      <h2>Extracted facts</h2>
+      ${facts.length ? `<table><thead><tr><th>fact</th><th>value</th><th>sample agreement</th><th>log-odds contribution</th></tr></thead><tbody>
+        ${facts.map(([f, v]) => `<tr><td>${f}${d.unread_facts.includes(f) ? ' <span class="badge ESCALATE">unread → imputed</span>' : ''}</td>
+          <td class="fact-${v}">${v}</td><td>${Math.round((d.fact_agreement[f] ?? 1)*100)}%</td>
+          <td>${(d.contributions[f + '=' + v] ?? '') === '' ? '—' : d.contributions[f + '=' + v].toFixed(2)}</td></tr>`).join('')}
+      </tbody></table>` : '<div class="empty">No facts could be established from these documents.</div>'}
     </div>
-  `;
-
-  panel.innerHTML = html;
-
-  const goBtn = document.getElementById('nudgeGo');
-  if(goBtn){
-    goBtn.addEventListener('click', () => {
-      const target = goBtn.dataset.target;
-      switchView(target);
-      if(target === 'escalations'){ $('#btnLoadEsc').click(); }
-    });
-  }
+    ${(cf.options || []).length ? `<div class="panel">
+      <h2>What would flip this to CONTEST — ranked by expected-value gain</h2>
+      <table><thead><tr><th>evidence</th><th>what it takes</th><th>P(win) after</th><th>EV gain</th></tr></thead><tbody>
+        ${cf.options.map(o => `<tr><td>${o.evidence.map(esc).join(' + ')}</td>
+          <td>${o.evidence.map(f => ({missing: 'collect it', unread: 'probably already in the documents — confirm',
+                adverse: 'documents say no — fix the process'})[o.kinds[f]]).join('; ')}</td>
+          <td>${(o.p_win_after*100).toFixed(0)}%</td><td>+${inr(o.ev_gain_inr)}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}
+    <div class="panel">
+      <h2>Audit trail</h2>
+      <ul class="auditlog">${(d.audit_log || []).map(line => `<li>${esc(line)}</li>`).join('')}</ul>
+    </div>`;
+  panel.querySelectorAll('[data-outcome]').forEach(b => b.addEventListener('click', async () => {
+    try{ await api(`/v1/disputes/${encodeURIComponent(d.case_id)}/outcome`, {method:'POST', body: JSON.stringify({outcome: b.dataset.outcome})});
+      $('#outcomeMsg').textContent = 'Recorded.'; }
+    catch(e){ $('#outcomeMsg').textContent = e.message; }
+  }));
 }
 
-// Purely a UI suggestion built from the action string the API already returns —
-// does not read any field the previous version didn't already use.
-function nudgeFor(action){
-  if(action === 'ESCALATE'){
-    return `<div class="nudge"><span>This case wasn't confident enough to auto-decide — it belongs to a human now.</span>
-      <button class="ghost" id="nudgeGo" data-target="escalations">See the escalation queue →</button></div>`;
-  }
-  if(action === 'CONTEST' || action === 'CONCEDE'){
-    return `<div class="nudge"><span>Curious whether this fits a wider pattern for this merchant?</span>
-      <button class="ghost" id="nudgeGo" data-target="reports">Open portfolio intelligence →</button></div>`;
-  }
-  return '';
-}
-
-// ---------- escalations ----------
-$('#btnLoadEsc').addEventListener('click', async () => {
-  const out = $('#escTable');
-  out.innerHTML = '<div class="empty">Loading…</div>';
+// ---------- review queue ----------
+$('#btnLoadEsc').addEventListener('click', loadQueue);
+async function loadQueue(){
+  const out = $('#escTable'); out.innerHTML = '<div class="empty">Loading…</div>';
   try{
-    const r = await fetch(apiBase() + '/escalations/ranked');
-    const rows = await r.json();
-    if(!rows.length){
-      out.innerHTML = `<div class="empty">
-        <div class="empty-title">Nothing waiting on a human right now</div>
-        That's the deterministic engine finding enough signal to decide on its own. Run a case with conflicting or thin evidence on the Evaluate tab to see one land here.
-      </div>`;
+    const page = await api('/v1/escalations?limit=50');
+    if(!page.items.length){
+      out.innerHTML = `<div class="empty"><div class="empty-title">Nothing is waiting on a human</div>
+        Try the "Fraud case, unfamiliar auth record" example on the Evaluate tab with no LLM configured.</div>`;
       return;
     }
-    out.innerHTML = `
-      <table>
-        <thead><tr><th>Rank</th><th>Case</th><th>Review value (₹)</th><th>Action</th></tr></thead>
-        <tbody>
-          ${rows.map((r, idx) => `
-            <tr class="esc-row" data-idx="${idx}">
-              <td>${r.rank}</td>
-              <td>${r.case_id}</td>
-              <td>₹${Number(r.human_review_value_inr).toLocaleString('en-IN')}</td>
-              <td><span class="badge ${r.action}">${r.action}</span></td>
-            </tr>
-            <tr class="esc-detail" data-idx="${idx}" style="display:none;">
-              <td colspan="4">${(r.memo || 'No memo recorded for this case.').replace(/</g,'&lt;')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      <div class="esc-hint">Click a row to see why the engine escalated it.</div>
-    `;
+    out.innerHTML = `<table><thead><tr><th>#</th><th>case</th><th>amount</th><th>P(win)</th><th>net review value</th></tr></thead><tbody>
+      ${page.items.map((r, i) => `
+        <tr class="esc-row" data-i="${i}" tabindex="0" role="button" aria-expanded="false" aria-label="Review ${esc(r.case_id)}"><td>${r.rank}</td><td>${esc(r.case_id)}</td><td>${inr(r.amount_inr)}</td>
+          <td>${(r.p_win*100).toFixed(0)}% ± ${(r.p_win_std*100).toFixed(0)}</td><td>${inr(r.net_review_value_inr)}</td></tr>
+        <tr class="esc-detail" data-i="${i}" style="display:none"><td colspan="5">
+          ${r.reasons.map(x => '• ' + esc(x)).join('<br>')}
+          <div class="inline-actions"><input type="text" placeholder="reviewer" data-reviewer="${i}" aria-label="Reviewer name">
+            <button class="small" data-review="CONTEST" data-case="${esc(r.case_id)}" data-i="${i}">Contest</button>
+            <button class="small" data-review="CONCEDE" data-case="${esc(r.case_id)}" data-i="${i}">Concede</button></div>
+        </td></tr>`).join('')}
+      </tbody></table><div class="esc-hint">${page.total} open · click a row to review it.</div>`;
     out.querySelectorAll('.esc-row').forEach(row => {
-      row.addEventListener('click', () => {
-        const detail = out.querySelector(`.esc-detail[data-idx="${row.dataset.idx}"]`);
-        if(detail) detail.style.display = detail.style.display === 'none' ? '' : 'none';
-      });
+      const toggle = () => {
+        const det = out.querySelector(`.esc-detail[data-i="${row.dataset.i}"]`);
+        const open = det.style.display === 'none';
+        det.style.display = open ? '' : 'none';
+        row.setAttribute('aria-expanded', String(open));
+      };
+      row.addEventListener('click', toggle);
+      row.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } });
     });
-  }catch(e){
-    out.innerHTML = `<div class="error">Error: ${e.message}</div>`;
-  }
-});
+    out.querySelectorAll('[data-review]').forEach(b => b.addEventListener('click', async () => {
+      const reviewer = out.querySelector(`[data-reviewer="${b.dataset.i}"]`).value.trim() || 'analyst';
+      try{ await api(`/v1/disputes/${encodeURIComponent(b.dataset.case)}/review`, {method:'POST',
+             body: JSON.stringify({reviewer, action: b.dataset.review})}); loadQueue(); }
+      catch(e){ alert(e.message); }
+    }));
+  }catch(e){ out.innerHTML = `<div class="error">Error: ${esc(e.message)}</div>`; }
+}
 
-// ---------- reports ----------
-// Small renderer for exactly the markdown shapes this backend emits
-// (headers, bold/italic, inline code, bullet lists, pipe tables) —
-// not a general-purpose markdown parser.
-function escapeHtml(s){
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-}
-function renderInline(text){
-  return escapeHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/(^|[^*])\*([^*]+)\*($|[^*])/g, '$1<em>$2</em>$3')
-    .replace(/`([^`]+)`/g, '<code>$1</code>');
-}
+// ---------- insights (renders the small markdown subset the backend emits) ----------
+function renderInline(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>'); }
 function renderTable(rows){
-  const dataRows = rows.filter(r => !/^\|[\s:|-]+\|$/.test(r));
-  const cells = dataRows.map(r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim()));
-  const [header, ...body] = cells;
-  let html = '<table class="report-table"><thead><tr>' +
-    header.map(h => `<th>${renderInline(h)}</th>`).join('') + '</tr></thead><tbody>';
-  body.forEach(r => { html += '<tr>' + r.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>'; });
-  return html + '</tbody></table>';
+  const cells = rows.filter(r => !/^\|[\s:|-]+\|$/.test(r)).map(r => r.replace(/^\||\|$/g,'').split('|').map(c => c.trim()));
+  const [head, ...body] = cells;
+  return '<table class="report-table"><thead><tr>' + head.map(h => `<th>${renderInline(h)}</th>`).join('') + '</tr></thead><tbody>' +
+    body.map(r => '<tr>' + r.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
 }
 function renderMarkdown(md){
-  const lines = md.replace(/\r\n/g, '\n').split('\n');
-  let html = '', i = 0, firstHeading = true;
+  const lines = md.split('\n'); let html = '', i = 0;
   while(i < lines.length){
     const line = lines[i];
-    if(/^\s*\|/.test(line)){
-      const tableLines = [];
-      while(i < lines.length && /^\s*\|/.test(lines[i])){ tableLines.push(lines[i].trim()); i++; }
-      html += renderTable(tableLines);
-      continue;
-    }
-    const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
-    if(headingMatch){
-      const level = headingMatch[1].length;
-      const cls = level === 1 ? 'report-h1' : (level === 2 ? 'report-h2' : 'report-h3');
-      html += `<div class="${cls}">${renderInline(headingMatch[2])}</div>`;
-      i++; continue;
-    }
-    if(/^\s*-\s+/.test(line)){
-      const items = [];
-      while(i < lines.length && /^\s*-\s+/.test(lines[i])){
-        items.push(lines[i].replace(/^\s*-\s+/, '')); i++;
-      }
-      html += '<ul class="report-list">' + items.map(it => `<li>${renderInline(it)}</li>`).join('') + '</ul>';
-      continue;
-    }
-    if(line.trim() === ''){ i++; continue; }
-    html += `<p class="report-p">${renderInline(line)}</p>`;
+    if(/^\s*\|/.test(line)){ const t = []; while(i < lines.length && /^\s*\|/.test(lines[i])) t.push(lines[i++].trim()); html += renderTable(t); continue; }
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    if(h){ html += `<div class="report-h${h[1].length}">${renderInline(h[2])}</div>`; i++; continue; }
+    if(/^\s*-\s+/.test(line)){ const items = []; while(i < lines.length && /^\s*-\s+/.test(lines[i])) items.push(lines[i++].replace(/^\s*-\s+/,''));
+      html += '<ul class="report-list">' + items.map(x => `<li>${renderInline(x)}</li>`).join('') + '</ul>'; continue; }
+    if(line.trim()) html += `<p class="report-p">${renderInline(line)}</p>`;
     i++;
   }
   return html;
 }
-
 $('#btnLoadReport').addEventListener('click', async () => {
-  const scope = $('#reportScope').value;
-  const out = $('#reportOut');
+  const scope = $('#reportScope').value, out = $('#reportOut');
   out.innerHTML = '<p class="report-p">Loading…</p>';
-  const path = scope === 'portfolio' ? '/reports/portfolio' : `/reports/merchant/${scope}`;
   try{
-    const r = await fetch(apiBase() + path);
-    if(!r.ok){ const d = await r.json(); throw new Error(d.detail || ('HTTP ' + r.status)); }
-    const d = await r.json();
-    out.innerHTML = d.markdown ? renderMarkdown(d.markdown) : `<pre style="white-space:pre-wrap;">${escapeHtml(JSON.stringify(d, null, 2))}</pre>`;
-  }catch(e){
-    out.innerHTML = `<p class="error">Error: ${escapeHtml(e.message)}</p>`;
-  }
+    const d = await api(scope === 'portfolio' ? '/v1/reports/portfolio' : `/v1/reports/merchants/${scope}`);
+    out.innerHTML = renderMarkdown(d.markdown);
+  }catch(e){ out.innerHTML = `<p class="error">Error: ${esc(e.message)}</p>`; }
 });
 </script>
 

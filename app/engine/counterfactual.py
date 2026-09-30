@@ -1,91 +1,121 @@
 """
-counterfactual.py
+"What evidence would change this decision?"
 
-Answers: "what's the one piece of missing evidence that would actually
-change this decision?" — not by asking an LLM to guess, but by re-running
-the real pipeline (evidence_scorer + decision_engine) once per candidate
-missing-evidence item and checking whether the action flips.
+For a CONCEDE or ESCALATE, try making each relevant fact that is not already
+favourable into 'yes', re-estimate P(win) with the same model and re-run the
+same policy. It returns every *minimal* set of facts (single facts first,
+then pairs of facts that do not already flip on their own) that turns the
+decision into CONTEST, ranked by the expected-value gain. On a large dispute
+this is the merchant's checklist of what is worth chasing, and each item says
+what kind of action it needs:
 
-Deliberate scope limit, stated honestly rather than hidden: this checks
-single-item additions only, not combinations. Checking all combinations
-of missing evidence is a real possibility (2^n candidates) but grows fast
-and mostly restates the same insight — the single most load-bearing gap
-is what a merchant actually acts on. If nothing single-handedly flips the
-decision, the result says so rather than silently returning nothing.
+  missing  no document covers the fact            -> go and collect it
+  unread   a document exists but was not read     -> it may already be there
+  adverse  the documents say 'no'                 -> an operations fix, not evidence
+
+Deterministic and LLM-free: the what-if runs through the same code path as
+the real decision, so the two cannot drift apart, and it costs no API calls.
 """
 from __future__ import annotations
 
-from .decision_engine import DecisionEngine
-from .demo_models import CounterfactualResult
-from .evidence_scorer import EvidenceScorer
-from .models import Decision, DisputeCase, Merchant
+from collections.abc import Callable
+from itertools import combinations
+from typing import Literal
+
+from pydantic import BaseModel
+
+from app.domain import Action, DisputeCase, EvidenceFacts, Merchant, Tri
+from app.engine.conflicts import find_conflicts
+from app.engine.decision_engine import Decision, DecisionEngine
+from app.extraction.aggregate import majority
+from app.scoring.win_model import WinEstimate
+
+EstimateFn = Callable[[list[EvidenceFacts]], WinEstimate]
+FactKind = Literal["missing", "unread", "adverse"]
 
 
-def find_minimal_flip(
+class FlipOption(BaseModel):
+    evidence: list[str]
+    kinds: dict[str, FactKind]
+    p_win_after: float
+    ev_contest_after_inr: float
+    ev_gain_inr: float
+
+
+class Counterfactual(BaseModel):
+    flips: bool
+    evidence_needed: list[str] = []          # the best option (largest EV gain)
+    resulting_action: Action | None = None
+    ev_gain_inr: float | None = None
+    options: list[FlipOption] = []           # every minimal flipping set, best first
+    note: str
+
+
+def find_flip(
     *,
     engine: DecisionEngine,
-    scorer: EvidenceScorer,
+    estimate: EstimateFn,
     case: DisputeCase,
     merchant: Merchant,
-    reason_code: str,
-    reason_label: str,
-    required_evidence: list[str],
-    present_evidence: list[str],
-    missing_evidence: list[str],
-    baseline_decision: Decision,
-) -> CounterfactualResult:
-    if not missing_evidence:
-        return CounterfactualResult(
-            case_id=case.case_id,
-            baseline_action=baseline_decision.action,
-            flips=False,
-            checked_items=[],
-            note="No missing evidence — the evidence set is already complete for this dispute type.",
-        )
+    relevant_facts: list[str],
+    fact_samples: list[EvidenceFacts],
+    baseline: Decision,
+    max_set_size: int = 2,
+    max_options: int = 5,
+    unread: list[str] | tuple[str, ...] = (),
+) -> Counterfactual:
+    if baseline.action == Action.CONTEST:
+        return Counterfactual(flips=False, note="Already CONTEST; nothing to obtain.")
 
-    checked: list[str] = []
-    best_flip: CounterfactualResult | None = None
+    representative = majority(fact_samples)
+    candidates = [f for f in relevant_facts if representative.get(f) != Tri.YES]
+    if not candidates:
+        return Counterfactual(flips=False, note="Every relevant fact is already favourable; the economics decide.")
 
-    for candidate in missing_evidence:
-        checked.append(candidate)
-        hypothetical_present = sorted(set(present_evidence) | {candidate})
-        hypothetical_missing = [e for e in missing_evidence if e != candidate]
+    options: list[FlipOption] = []
+    flipping_singles: set[str] = set()
+    for size in range(1, max_set_size + 1):
+        for combo in combinations(candidates, size):
+            if size > 1 and flipping_singles & set(combo):
+                continue  # not minimal: a subset already flips the decision
+            samples = [f.model_copy(update={x: Tri.YES for x in combo}) for f in fact_samples]
+            decision = engine.decide(case, merchant, estimate(samples), find_conflicts(majority(samples), relevant_facts))
+            if decision.action != Action.CONTEST:
+                continue
+            if size == 1:
+                flipping_singles.add(combo[0])
+            options.append(FlipOption(
+                evidence=list(combo),
+                kinds={f: _kind(f, representative, unread) for f in combo},
+                p_win_after=decision.p_win,
+                ev_contest_after_inr=decision.ev_contest_inr,
+                ev_gain_inr=round(decision.ev_contest_inr - baseline.ev_contest_inr, 2),
+            ))
 
-        hypothetical_assessment = scorer.assess(
-            reason_code=reason_code,
-            reason_label=reason_label,
-            required_evidence=required_evidence,
-            present_evidence=hypothetical_present,
-            missing_evidence=hypothetical_missing,
-        )
-        hypothetical_decision = engine.decide(case, merchant, hypothetical_assessment)
+    if not options:
+        return Counterfactual(flips=False,
+                              note=f"No set of up to {max_set_size} additional facts makes contesting worthwhile.")
+    options.sort(key=lambda o: (len(o.evidence), -o.ev_gain_inr))
+    options = options[:max_options]
+    best = max(options, key=lambda o: o.ev_gain_inr)
+    note = (f"{' and '.join(_describe(f, best.kinds[f]) for f in best.evidence)} would flip "
+            f"{baseline.action.value} -> CONTEST (P(win) {baseline.p_win:.2f} -> {best.p_win_after:.2f}, "
+            f"EV +₹{best.ev_gain_inr:,.0f}).")
+    if len(options) > 1:
+        note += f" {len(options) - 1} other option(s) would also flip it."
+    return Counterfactual(flips=True, evidence_needed=best.evidence, resulting_action=Action.CONTEST,
+                          ev_gain_inr=best.ev_gain_inr, options=options, note=note)
 
-        if hypothetical_decision.action != baseline_decision.action:
-            ev_delta = hypothetical_decision.ev_contest_inr - baseline_decision.ev_contest_inr
-            candidate_result = CounterfactualResult(
-                case_id=case.case_id,
-                baseline_action=baseline_decision.action,
-                flips=True,
-                flipping_evidence=candidate,
-                resulting_action=hypothetical_decision.action,
-                ev_delta_inr=round(ev_delta, 2),
-                checked_items=list(checked),
-                note=f"Adding '{candidate}' alone flips {baseline_decision.action.value} "
-                     f"-> {hypothetical_decision.action.value} "
-                     f"(EV shifts by ₹{ev_delta:,.0f}).",
-            )
-            # Keep the flip with the largest EV swing if multiple single items flip it.
-            if best_flip is None or (candidate_result.ev_delta_inr or 0) > (best_flip.ev_delta_inr or 0):
-                best_flip = candidate_result
 
-    if best_flip is not None:
-        best_flip.checked_items = checked  # report all items actually tested, not just the winner
-        return best_flip
+def _kind(fact: str, facts: EvidenceFacts, unread) -> FactKind:
+    if fact in unread:
+        return "unread"
+    return "adverse" if facts.get(fact) == Tri.NO else "missing"
 
-    return CounterfactualResult(
-        case_id=case.case_id,
-        baseline_action=baseline_decision.action,
-        flips=False,
-        checked_items=checked,
-        note="No single missing evidence item would change this decision — would need multiple evidence items together.",
-    )
+
+def _describe(fact: str, kind: FactKind) -> str:
+    return {
+        "unread": f"confirming {fact} (a document may already say so; it could not be read)",
+        "adverse": f"{fact} being yes instead of no (an operations fix, not evidence to collect)",
+        "missing": f"obtaining evidence for {fact}",
+    }[kind]

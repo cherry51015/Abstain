@@ -1,142 +1,119 @@
-"""
-test_decision_engine.py
-
-Tests the deterministic core in isolation — constructs EvidenceAssessment
-directly rather than going through EvidenceScorer, so these tests exercise
-decision_engine.py's own logic only, not the LLM/fallback path (that's
-evidence_scorer's own concern, and its fallback determinism is exercised
-indirectly via test_portfolio_pairs.py and the eval harness).
-
-Each test targets exactly one gate, in the order decide() actually checks
-them, so a failure here points straight at which gate broke.
-"""
 from __future__ import annotations
+
+from decimal import Decimal
+
+import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
-from app.engine.decision_engine import DecisionEngine, EngineConfig
-from app.engine.models import Action, DisputeCase, EvidenceAssessment, Merchant
-
-
-def make_merchant(**overrides) -> Merchant:
-    defaults = dict(
-        merchant_id="mch_test", historical_win_rate=0.5,
-        current_chargeback_rate_pct=0.3, network_threshold_pct=0.9,
-        ops_cost_per_contest_inr=500.0, risk_tolerance="moderate",
-    )
-    defaults.update(overrides)
-    return Merchant(**defaults)
+from app.domain import Action
+from app.engine.decision_engine import DecisionEngine, PolicyConfig, expected_positive_part, value_of_information
+from app.scoring.win_model import WinEstimate
+from tests.conftest import make_case
 
 
-def make_case(**overrides) -> DisputeCase:
-    defaults = dict(
-        case_id="case_test", merchant_id="mch_test", reason_code="13.1",
-        dispute_amount_inr=5000.0, response_deadline_days_left=10,
-        is_repeat_dispute=False, conflicting_evidence=False,
-    )
-    defaults.update(overrides)
-    return DisputeCase(**defaults)
+def est(mean: float, std: float) -> WinEstimate:
+    return WinEstimate(mean=mean, std=std, n_draws=1)
 
 
-def make_evidence(**overrides) -> EvidenceAssessment:
-    defaults = dict(strength=0.8, uncertainty=0.10, source="llm", key_gaps=[], reasoning="")
-    defaults.update(overrides)
-    return EvidenceAssessment(**defaults)
+def merchant(catalog, tolerance: str = "moderate"):
+    return catalog.merchant("mch_05").model_copy(update={"risk_tolerance": tolerance})
 
 
-@pytest.fixture
-def engine() -> DecisionEngine:
-    return DecisionEngine()
+# ---------------------------------------------------------------- VOI math
+
+@pytest.mark.parametrize("m,s", [(0.0, 1.0), (500.0, 800.0), (-1200.0, 900.0), (3000.0, 100.0)])
+def test_expected_positive_part_matches_monte_carlo(m, s):
+    x = np.random.default_rng(0).normal(m, s, 400_000)
+    assert expected_positive_part(m, s) == pytest.approx(np.maximum(x, 0).mean(), rel=0.02, abs=2.0)
 
 
-# ---------- Gate 1: feasibility ----------
-
-def test_feasibility_gate_forces_concede_when_days_left_below_minimum(engine):
-    case = make_case(response_deadline_days_left=1)
-    decision = engine.decide(case, make_merchant(), make_evidence(strength=0.95, uncertainty=0.05))
-    assert decision.action == Action.CONCEDE
-    assert "day(s) left to respond" in decision.reasons[0]
+def test_voi_is_zero_without_uncertainty():
+    assert value_of_information(1000.0, 0.0) == 0.0
+    assert value_of_information(-1000.0, 0.0) == 0.0
 
 
-def test_feasibility_gate_allows_processing_at_exact_minimum(engine):
-    cfg = EngineConfig(min_days_to_respond=2)
-    e = DecisionEngine(cfg)
-    case = make_case(response_deadline_days_left=2)  # exactly at the minimum, should NOT trigger the gate
-    decision = e.decide(case, make_merchant(), make_evidence(strength=0.95, uncertainty=0.05))
-    assert "day(s) left to respond" not in decision.reasons[0]
+@given(m=st.floats(-1e5, 1e5), s=st.floats(0, 1e5))
+def test_voi_is_non_negative(m, s):
+    assert value_of_information(m, s) >= 0.0
 
 
-# ---------- Gate 2: trivial amount ----------
-
-def test_trivial_amount_forces_concede_regardless_of_evidence():
-    merchant = make_merchant(ops_cost_per_contest_inr=1000.0)
-    case = make_case(dispute_amount_inr=500.0)  # even a 100% win can't clear ops cost
-    engine = DecisionEngine()
-    decision = engine.decide(case, merchant, make_evidence(strength=1.0, uncertainty=0.01))
-    assert decision.action == Action.CONCEDE
-    assert "Not economically contestable" in decision.reasons[0]
+@given(m=st.floats(-1e4, 1e4), s1=st.floats(1, 1e4), s2=st.floats(1, 1e4))
+def test_voi_grows_with_uncertainty(m, s1, s2):
+    lo, hi = sorted([s1, s2])
+    assert value_of_information(m, lo) <= value_of_information(m, hi) + 1e-6
 
 
-# ---------- Gate 3: confidence ----------
+# ---------------------------------------------------------------- gates
 
-def test_low_confidence_forces_escalate_even_with_strong_point_estimate(engine):
-    case = make_case()
-    decision = engine.decide(case, make_merchant(), make_evidence(strength=0.9, uncertainty=0.5))
-    assert decision.action == Action.ESCALATE
-    assert decision.confidence_label == "LOW"
+def test_feasibility_gate_concedes_even_a_certain_win(engine, catalog):
+    d = engine.decide(make_case(response_deadline_days_left=1), merchant(catalog), est(0.99, 0.0))
+    assert d.action == Action.CONCEDE and "Feasibility" in d.reasons[-1]
 
 
-def test_conflicting_evidence_forces_escalate_even_at_high_confidence(engine):
-    case = make_case(conflicting_evidence=True)
-    decision = engine.decide(case, make_merchant(), make_evidence(strength=0.9, uncertainty=0.05))
-    assert decision.action == Action.ESCALATE
-    assert "conflicting" in decision.reasons[-1].lower()
+def test_uneconomic_amount_is_conceded_at_any_probability(engine, catalog):
+    d = engine.decide(make_case(amount_inr=Decimal("500")), merchant(catalog), est(1.0, 0.0))
+    assert d.action == Action.CONCEDE and "not contestable" in d.reasons[-1]
 
 
-# ---------- Gate 4: EV-based decision ----------
-
-def test_high_confidence_contests_when_ev_positive(engine):
-    case = make_case(dispute_amount_inr=10000.0)
-    merchant = make_merchant(ops_cost_per_contest_inr=300.0)
-    decision = engine.decide(case, merchant, make_evidence(strength=0.85, uncertainty=0.05))
-    assert decision.confidence_label == "HIGH"
-    assert decision.action == Action.CONTEST
+def test_repeat_dispute_raises_contest_cost(engine, catalog):
+    base = engine.decide(make_case(), merchant(catalog), est(0.6, 0.02))
+    repeat = engine.decide(make_case(is_repeat_dispute=True), merchant(catalog), est(0.6, 0.02))
+    assert repeat.contest_cost_inr == pytest.approx(base.contest_cost_inr * 1.6)
 
 
-def test_high_confidence_concedes_when_ev_negative(engine):
-    case = make_case(dispute_amount_inr=1000.0)
-    merchant = make_merchant(ops_cost_per_contest_inr=800.0)
-    decision = engine.decide(case, merchant, make_evidence(strength=0.3, uncertainty=0.05))
-    assert decision.confidence_label == "HIGH"
-    assert decision.action == Action.CONCEDE
+# ---------------------------------------------------------------- EV policy
+
+def test_confident_positive_ev_contests(engine, catalog):
+    d = engine.decide(make_case(), merchant(catalog), est(0.8, 0.02))
+    assert d.action == Action.CONTEST and d.confidence == "HIGH"
 
 
-def test_medium_confidence_escalates_when_ev_falls_inside_margin(engine):
-    # Deliberately balanced so EV_contest lands close to zero, inside the
-    # medium-confidence margin — should escalate rather than guess.
-    case = make_case(dispute_amount_inr=1200.0)
-    merchant = make_merchant(ops_cost_per_contest_inr=600.0)
-    decision = engine.decide(case, merchant, make_evidence(strength=0.55, uncertainty=0.25))
-    assert decision.confidence_label == "MEDIUM"
-    assert decision.action == Action.ESCALATE
+def test_confident_negative_ev_concedes(engine, catalog):
+    d = engine.decide(make_case(), merchant(catalog), est(0.05, 0.02))
+    assert d.action == Action.CONCEDE
 
 
-# ---------- Ops cost / repeat dispute ----------
-
-def test_repeat_dispute_increases_ops_cost(engine):
-    merchant = make_merchant(ops_cost_per_contest_inr=500.0)
-    first = engine.decide(make_case(is_repeat_dispute=False), merchant, make_evidence())
-    second = engine.decide(make_case(is_repeat_dispute=True), merchant, make_evidence())
-    assert second.ops_cost_inr > first.ops_cost_inr
-    assert second.ops_cost_inr == pytest.approx(500.0 * 1.6)
+def test_uncertain_high_stakes_case_escalates(engine, catalog):
+    d = engine.decide(make_case(amount_inr=Decimal("90000")), merchant(catalog), est(0.02, 0.25))
+    assert d.action == Action.ESCALATE
+    assert d.review_value_inr > d.review_cost_inr
 
 
-# ---------- Input validation ----------
+def test_escalates_exactly_when_voi_exceeds_review_cost(engine, catalog):
+    for std in np.linspace(0.0, 0.4, 41):
+        d = engine.decide(make_case(), merchant(catalog), est(0.2, float(std)))
+        assert (d.action == Action.ESCALATE) == (d.review_value_inr > d.review_cost_inr)
 
-def test_unrecognized_risk_tolerance_rejected_at_construction():
-    with pytest.raises(ValueError):
-        make_merchant(risk_tolerance="reckless")
+
+def test_conservative_merchants_escalate_at_least_as_often(engine, catalog):
+    case = make_case(amount_inr=Decimal("6000"))
+    for std in np.linspace(0.0, 0.4, 21):
+        cons = engine.decide(case, merchant(catalog, "conservative"), est(0.2, float(std)))
+        aggr = engine.decide(case, merchant(catalog, "aggressive"), est(0.2, float(std)))
+        if aggr.action == Action.ESCALATE:
+            assert cons.action == Action.ESCALATE
 
 
-def test_negative_amount_rejected_at_construction():
-    with pytest.raises(ValueError):
-        make_case(dispute_amount_inr=-100.0)
+def test_conflicts_widen_uncertainty_instead_of_forcing_escalation(engine, catalog):
+    cheap = engine.decide(make_case(amount_inr=Decimal("1500")), merchant(catalog), est(0.9, 0.01),
+                          conflicts=["signature mismatch"])
+    assert cheap.p_win_std == PolicyConfig().conflict_std_floor
+    assert cheap.action != Action.ESCALATE  # not worth a human at this amount
+    big = engine.decide(make_case(amount_inr=Decimal("60000")), merchant(catalog), est(0.3, 0.01),
+                        conflicts=["signature mismatch"])
+    assert big.action == Action.ESCALATE
+
+
+@settings(max_examples=200)
+@given(mu=st.floats(0, 1), delta=st.floats(0, 1), std=st.floats(0, 0.5),
+       amount=st.integers(200, 200_000))
+def test_higher_win_probability_never_turns_contest_into_concede(mu, delta, std, amount):
+    from app.catalog import load_catalog
+    engine, m = DecisionEngine(), load_catalog().merchant("mch_05")
+    case = make_case(amount_inr=Decimal(amount))
+    lo = engine.decide(case, m, est(mu, std))
+    hi = engine.decide(case, m, est(min(1.0, mu + delta), std))
+    if lo.action == Action.CONTEST:
+        assert hi.action != Action.CONCEDE

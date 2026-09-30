@@ -11,17 +11,15 @@ services:
       test: ["CMD-SHELL", "pg_isready -U abstain -d abstain"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  app:
+  api:
     build: .
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
-      # Overrides whatever DB_URL is in .env — .env's DB_URL is for running
-      # main.py directly on the host (SQLite default); inside compose, the
-      # app always talks to the 'db' service by its container hostname.
-      DB_URL: postgresql://abstain:abstain@db:5432/abstain
+      DATABASE_URL: postgresql://abstain:abstain@db:5432/abstain
     depends_on:
       db:
         condition: service_healthy
