@@ -1,7 +1,7 @@
 # Abstain API. Small on purpose: no torch/FAISS/LangChain at runtime, so it fits a 512 MB instance.
 FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PYTHONPATH=/app
 WORKDIR /app
 
 COPY requirements.txt .

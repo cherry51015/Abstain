@@ -1,0 +1,1579 @@
+{
+ "model_version": "wm-d9e4b0f2fe",
+ "llm_model": "qwen/qwen3.8-27b",
+ "llm_samples": 3,
+ "splits": {
+  "test": {
+   "oracle": {
+    "n": 80,
+    "wall_s": 0.1,
+    "extraction": {
+     "accuracy_known_facts": 1.0,
+     "accuracy_all_facts": 1.0,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 1.0,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1235,
+     "log_loss": 0.3879,
+     "ece": 0.099,
+     "auc": 0.9073,
+     "mae_vs_true_p": 0.0355,
+     "mean_std": 0.0523,
+     "coverage_90": 0.912
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -189405,
+      "expected_vs_contest_all_ci95": [
+       -386539,
+       -66574
+      ],
+      "realized_vs_contest_all": -198940,
+      "realized_vs_contest_all_ci95": [
+       -442639,
+       -45720
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 189405,
+      "realized_net_inr": 198940,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 74,
+      "concede": 6,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 203122,
+      "realized_net_inr": 215870,
+      "expected_vs_contest_all": 13717,
+      "expected_vs_contest_all_ci95": [
+       8222,
+       19821
+      ],
+      "realized_vs_contest_all": 16930,
+      "realized_vs_contest_all_ci95": [
+       8510,
+       26071
+      ],
+      "contest": 44,
+      "concede": 33,
+      "escalate": 3
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 203722,
+      "realized_net_inr": 216470,
+      "expected_vs_contest_all": 14317,
+      "expected_vs_contest_all_ci95": [
+       8853,
+       20316
+      ],
+      "realized_vs_contest_all": 17530,
+      "realized_vs_contest_all_ci95": [
+       9450,
+       26582
+      ],
+      "contest": 46,
+      "concede": 34,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 204422
+    },
+    "classification": {
+     "precision": 0.545,
+     "recall": 0.706,
+     "tp": 24,
+     "fp": 20,
+     "tn": 23,
+     "fn": 10,
+     "fp_cost_inr": 13500,
+     "fn_cost_inr": 19840,
+     "escalation_rate": 0.037
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.917,
+      "recall": 0.579,
+      "tp": 11,
+      "fp": 1,
+      "tn": 8,
+      "fn": 8,
+      "fp_cost_inr": 850,
+      "fn_cost_inr": 18030,
+      "escalation_rate": 0.65,
+      "expected_net_inr": 204422
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.585,
+      "recall": 0.706,
+      "tp": 24,
+      "fp": 17,
+      "tn": 22,
+      "fn": 10,
+      "fp_cost_inr": 10900,
+      "fn_cost_inr": 19840,
+      "escalation_rate": 0.087,
+      "expected_net_inr": 204022
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.545,
+      "recall": 0.706,
+      "tp": 24,
+      "fp": 20,
+      "tn": 23,
+      "fn": 10,
+      "fp_cost_inr": 13500,
+      "fn_cost_inr": 19840,
+      "escalation_rate": 0.037,
+      "expected_net_inr": 203122
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.533,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 21,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14200,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203422
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.533,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 21,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14200,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203222
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.522,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 22,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14600,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 203722
+     }
+    ]
+   },
+   "rules": {
+    "n": 80,
+    "wall_s": 0.1,
+    "extraction": {
+     "accuracy_known_facts": 0.9912,
+     "accuracy_all_facts": 0.9958,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 0.912,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1235,
+     "log_loss": 0.3879,
+     "ece": 0.099,
+     "auc": 0.9073,
+     "mae_vs_true_p": 0.0355,
+     "mean_std": 0.0523,
+     "coverage_90": 0.912
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -189405,
+      "expected_vs_contest_all_ci95": [
+       -386539,
+       -66574
+      ],
+      "realized_vs_contest_all": -198940,
+      "realized_vs_contest_all_ci95": [
+       -442639,
+       -45720
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 189405,
+      "realized_net_inr": 198940,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 74,
+      "concede": 6,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 203122,
+      "realized_net_inr": 215870,
+      "expected_vs_contest_all": 13717,
+      "expected_vs_contest_all_ci95": [
+       8222,
+       19821
+      ],
+      "realized_vs_contest_all": 16930,
+      "realized_vs_contest_all_ci95": [
+       8510,
+       26071
+      ],
+      "contest": 44,
+      "concede": 33,
+      "escalate": 3
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 203722,
+      "realized_net_inr": 216470,
+      "expected_vs_contest_all": 14317,
+      "expected_vs_contest_all_ci95": [
+       8853,
+       20316
+      ],
+      "realized_vs_contest_all": 17530,
+      "realized_vs_contest_all_ci95": [
+       9450,
+       26582
+      ],
+      "contest": 46,
+      "concede": 34,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 204422
+    },
+    "classification": {
+     "precision": 0.545,
+     "recall": 0.706,
+     "tp": 24,
+     "fp": 20,
+     "tn": 23,
+     "fn": 10,
+     "fp_cost_inr": 13500,
+     "fn_cost_inr": 19840,
+     "escalation_rate": 0.037
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.917,
+      "recall": 0.579,
+      "tp": 11,
+      "fp": 1,
+      "tn": 8,
+      "fn": 8,
+      "fp_cost_inr": 850,
+      "fn_cost_inr": 18030,
+      "escalation_rate": 0.65,
+      "expected_net_inr": 204422
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.585,
+      "recall": 0.706,
+      "tp": 24,
+      "fp": 17,
+      "tn": 22,
+      "fn": 10,
+      "fp_cost_inr": 10900,
+      "fn_cost_inr": 19840,
+      "escalation_rate": 0.087,
+      "expected_net_inr": 204022
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.545,
+      "recall": 0.706,
+      "tp": 24,
+      "fp": 20,
+      "tn": 23,
+      "fn": 10,
+      "fp_cost_inr": 13500,
+      "fn_cost_inr": 19840,
+      "escalation_rate": 0.037,
+      "expected_net_inr": 203122
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.533,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 21,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14200,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203422
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.533,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 21,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14200,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203222
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.522,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 22,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14600,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 203722
+     }
+    ]
+   },
+   "cascade": {
+    "n": 80,
+    "wall_s": 0.1,
+    "extraction": {
+     "accuracy_known_facts": 0.9912,
+     "accuracy_all_facts": 0.9958,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 0.912,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1235,
+     "log_loss": 0.3879,
+     "ece": 0.099,
+     "auc": 0.9073,
+     "mae_vs_true_p": 0.0355,
+     "mean_std": 0.0523,
+     "coverage_90": 0.912
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -189405,
+      "expected_vs_contest_all_ci95": [
+       -386539,
+       -66574
+      ],
+      "realized_vs_contest_all": -198940,
+      "realized_vs_contest_all_ci95": [
+       -442639,
+       -45720
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 189405,
+      "realized_net_inr": 198940,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 74,
+      "concede": 6,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 203122,
+      "realized_net_inr": 215870,
+      "expected_vs_contest_all": 13717,
+      "expected_vs_contest_all_ci95": [
+       8222,
+       19821
+      ],
+      "realized_vs_contest_all": 16930,
+      "realized_vs_contest_all_ci95": [
+       8510,
+       26071
+      ],
+      "contest": 44,
+      "concede": 33,
+      "escalate": 3
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 203722,
+      "realized_net_inr": 216470,
+      "expected_vs_contest_all": 14317,
+      "expected_vs_contest_all_ci95": [
+       8853,
+       20316
+      ],
+      "realized_vs_contest_all": 17530,
+      "realized_vs_contest_all_ci95": [
+       9450,
+       26582
+      ],
+      "contest": 46,
+      "concede": 34,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 204422
+    },
+    "classification": {
+     "precision": 0.545,
+     "recall": 0.706,
+     "tp": 24,
+     "fp": 20,
+     "tn": 23,
+     "fn": 10,
+     "fp_cost_inr": 13500,
+     "fn_cost_inr": 19840,
+     "escalation_rate": 0.037
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.917,
+      "recall": 0.579,
+      "tp": 11,
+      "fp": 1,
+      "tn": 8,
+      "fn": 8,
+      "fp_cost_inr": 850,
+      "fn_cost_inr": 18030,
+      "escalation_rate": 0.65,
+      "expected_net_inr": 204422
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.585,
+      "recall": 0.706,
+      "tp": 24,
+      "fp": 17,
+      "tn": 22,
+      "fn": 10,
+      "fp_cost_inr": 10900,
+      "fn_cost_inr": 19840,
+      "escalation_rate": 0.087,
+      "expected_net_inr": 204022
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.545,
+      "recall": 0.706,
+      "tp": 24,
+      "fp": 20,
+      "tn": 23,
+      "fn": 10,
+      "fp_cost_inr": 13500,
+      "fn_cost_inr": 19840,
+      "escalation_rate": 0.037,
+      "expected_net_inr": 203122
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.533,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 21,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14200,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203422
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.533,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 21,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14200,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203222
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.522,
+      "recall": 0.686,
+      "tp": 24,
+      "fp": 22,
+      "tn": 23,
+      "fn": 11,
+      "fp_cost_inr": 14600,
+      "fn_cost_inr": 21870,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 203722
+     }
+    ]
+   },
+   "llm": {
+    "n": 80,
+    "wall_s": 0.2,
+    "extraction": {
+     "accuracy_known_facts": 0.9558,
+     "accuracy_all_facts": 0.9653,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 0.966,
+      "customer_acknowledged_receipt": 1.0,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 0.838,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 0.75,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 3.0,
+     "cases_sent_to_llm": 80,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1228,
+     "log_loss": 0.3862,
+     "ece": 0.1003,
+     "auc": 0.9067,
+     "mae_vs_true_p": 0.0518,
+     "mean_std": 0.0609,
+     "coverage_90": 0.912
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -189405,
+      "expected_vs_contest_all_ci95": [
+       -386539,
+       -66574
+      ],
+      "realized_vs_contest_all": -198940,
+      "realized_vs_contest_all_ci95": [
+       -442639,
+       -45720
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 189405,
+      "realized_net_inr": 198940,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 74,
+      "concede": 6,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 203468,
+      "realized_net_inr": 219070,
+      "expected_vs_contest_all": 14063,
+      "expected_vs_contest_all_ci95": [
+       8526,
+       20421
+      ],
+      "realized_vs_contest_all": 20130,
+      "realized_vs_contest_all_ci95": [
+       12830,
+       28191
+      ],
+      "contest": 44,
+      "concede": 33,
+      "escalate": 3
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 203833,
+      "realized_net_inr": 220520,
+      "expected_vs_contest_all": 14427,
+      "expected_vs_contest_all_ci95": [
+       9110,
+       20648
+      ],
+      "realized_vs_contest_all": 21580,
+      "realized_vs_contest_all_ci95": [
+       14310,
+       29570
+      ],
+      "contest": 46,
+      "concede": 34,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 204422
+    },
+    "classification": {
+     "precision": 0.591,
+     "recall": 0.743,
+     "tp": 26,
+     "fp": 18,
+     "tn": 24,
+     "fn": 9,
+     "fp_cost_inr": 11750,
+     "fn_cost_inr": 18770,
+     "escalation_rate": 0.037
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 0.889,
+      "recall": 0.5,
+      "tp": 8,
+      "fp": 1,
+      "tn": 7,
+      "fn": 8,
+      "fp_cost_inr": 850,
+      "fn_cost_inr": 18030,
+      "escalation_rate": 0.7,
+      "expected_net_inr": 204422
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.595,
+      "recall": 0.735,
+      "tp": 25,
+      "fp": 17,
+      "tn": 23,
+      "fn": 9,
+      "fp_cost_inr": 10900,
+      "fn_cost_inr": 18770,
+      "escalation_rate": 0.075,
+      "expected_net_inr": 203891
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.591,
+      "recall": 0.743,
+      "tp": 26,
+      "fp": 18,
+      "tn": 24,
+      "fn": 9,
+      "fp_cost_inr": 11750,
+      "fn_cost_inr": 18770,
+      "escalation_rate": 0.037,
+      "expected_net_inr": 203468
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.578,
+      "recall": 0.743,
+      "tp": 26,
+      "fp": 19,
+      "tn": 25,
+      "fn": 9,
+      "fp_cost_inr": 12450,
+      "fn_cost_inr": 18770,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203533
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.578,
+      "recall": 0.743,
+      "tp": 26,
+      "fp": 19,
+      "tn": 25,
+      "fn": 9,
+      "fp_cost_inr": 12450,
+      "fn_cost_inr": 18770,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 203333
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.565,
+      "recall": 0.743,
+      "tp": 26,
+      "fp": 20,
+      "tn": 25,
+      "fn": 9,
+      "fp_cost_inr": 12850,
+      "fn_cost_inr": 18770,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 203833
+     }
+    ]
+   }
+  },
+  "test_shifted": {
+   "oracle": {
+    "n": 80,
+    "wall_s": 0.2,
+    "extraction": {
+     "accuracy_known_facts": 1.0,
+     "accuracy_all_facts": 1.0,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 1.0,
+      "customer_acknowledged_receipt": 1.0,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 1.0,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 1.0,
+      "prior_undisputed_orders": 1.0,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1622,
+     "log_loss": 0.4961,
+     "ece": 0.1217,
+     "auc": 0.825,
+     "mae_vs_true_p": 0.0425,
+     "mean_std": 0.0465,
+     "coverage_90": 0.863
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -67198,
+      "expected_vs_contest_all_ci95": [
+       -167154,
+       -8770
+      ],
+      "realized_vs_contest_all": -80010,
+      "realized_vs_contest_all_ci95": [
+       -197702,
+       -4464
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 67198,
+      "realized_net_inr": 80010,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 73,
+      "concede": 7,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 91293,
+      "realized_net_inr": 96870,
+      "expected_vs_contest_all": 24095,
+      "expected_vs_contest_all_ci95": [
+       17392,
+       31412
+      ],
+      "realized_vs_contest_all": 16860,
+      "realized_vs_contest_all_ci95": [
+       -2416,
+       32280
+      ],
+      "contest": 31,
+      "concede": 48,
+      "escalate": 1
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 91443,
+      "realized_net_inr": 97020,
+      "expected_vs_contest_all": 24245,
+      "expected_vs_contest_all_ci95": [
+       17438,
+       31465
+      ],
+      "realized_vs_contest_all": 17010,
+      "realized_vs_contest_all_ci95": [
+       -2286,
+       32332
+      ],
+      "contest": 32,
+      "concede": 48,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 92072
+    },
+    "classification": {
+     "precision": 0.548,
+     "recall": 0.567,
+     "tp": 17,
+     "fp": 14,
+     "tn": 35,
+     "fn": 13,
+     "fp_cost_inr": 8700,
+     "fn_cost_inr": 32200,
+     "escalation_rate": 0.013
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 1.0,
+      "recall": 0.562,
+      "tp": 9,
+      "fp": 0,
+      "tn": 10,
+      "fn": 7,
+      "fp_cost_inr": 0,
+      "fn_cost_inr": 15000,
+      "escalation_rate": 0.675,
+      "expected_net_inr": 92072
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.567,
+      "recall": 0.567,
+      "tp": 17,
+      "fp": 13,
+      "tn": 35,
+      "fn": 13,
+      "fp_cost_inr": 7850,
+      "fn_cost_inr": 32200,
+      "escalation_rate": 0.025,
+      "expected_net_inr": 91435
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.548,
+      "recall": 0.567,
+      "tp": 17,
+      "fp": 14,
+      "tn": 35,
+      "fn": 13,
+      "fp_cost_inr": 8700,
+      "fn_cost_inr": 32200,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 91293
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.548,
+      "recall": 0.567,
+      "tp": 17,
+      "fp": 14,
+      "tn": 35,
+      "fn": 13,
+      "fp_cost_inr": 8700,
+      "fn_cost_inr": 32200,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 91143
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.548,
+      "recall": 0.567,
+      "tp": 17,
+      "fp": 14,
+      "tn": 35,
+      "fn": 13,
+      "fp_cost_inr": 8700,
+      "fn_cost_inr": 32200,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 90943
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.531,
+      "recall": 0.567,
+      "tp": 17,
+      "fp": 15,
+      "tn": 35,
+      "fn": 13,
+      "fp_cost_inr": 9100,
+      "fn_cost_inr": 32200,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 91443
+     }
+    ]
+   },
+   "rules": {
+    "n": 80,
+    "wall_s": 0.2,
+    "extraction": {
+     "accuracy_known_facts": 0.0929,
+     "accuracy_all_facts": 0.5931,
+     "per_fact_known": {
+      "delivery_confirmed": 0.28,
+      "signed_by_cardholder": 0.208,
+      "customer_acknowledged_receipt": 0.111,
+      "item_matches_description": 0.0,
+      "return_or_refund_offered": 0.2,
+      "avs_cvv_match": 0.0,
+      "ip_consistent_with_cardholder": 0.0,
+      "prior_undisputed_orders": 0.0,
+      "amount_matches_agreement": 0.0
+     },
+     "llm_calls_per_case": 0.0,
+     "cases_sent_to_llm": 0,
+     "failed_samples": 0,
+     "ungrounded_answers": 0,
+     "tokens": 0,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.2589,
+     "log_loss": 0.7116,
+     "ece": 0.2067,
+     "auc": 0.4733,
+     "mae_vs_true_p": 0.2655,
+     "mean_std": 0.2564,
+     "coverage_90": 0.825
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -67198,
+      "expected_vs_contest_all_ci95": [
+       -167154,
+       -8770
+      ],
+      "realized_vs_contest_all": -80010,
+      "realized_vs_contest_all_ci95": [
+       -197702,
+       -4464
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 67198,
+      "realized_net_inr": 80010,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 73,
+      "concede": 7,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 80571,
+      "realized_net_inr": 90350,
+      "expected_vs_contest_all": 13374,
+      "expected_vs_contest_all_ci95": [
+       5772,
+       20987
+      ],
+      "realized_vs_contest_all": 10340,
+      "realized_vs_contest_all_ci95": [
+       1080,
+       19772
+      ],
+      "contest": 43,
+      "concede": 32,
+      "escalate": 5
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 80719,
+      "realized_net_inr": 89660,
+      "expected_vs_contest_all": 13521,
+      "expected_vs_contest_all_ci95": [
+       6040,
+       21245
+      ],
+      "realized_vs_contest_all": 9650,
+      "realized_vs_contest_all_ci95": [
+       397,
+       18780
+      ],
+      "contest": 47,
+      "concede": 33,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 92072
+    },
+    "classification": {
+     "precision": 0.349,
+     "recall": 0.517,
+     "tp": 15,
+     "fp": 28,
+     "tn": 18,
+     "fn": 14,
+     "fp_cost_inr": 19830,
+     "fn_cost_inr": 27130,
+     "escalation_rate": 0.062
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": null,
+      "recall": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "tn": 8,
+      "fn": 7,
+      "fp_cost_inr": 0,
+      "fn_cost_inr": 15000,
+      "escalation_rate": 0.812,
+      "expected_net_inr": 92072
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.292,
+      "recall": 0.368,
+      "tp": 7,
+      "fp": 17,
+      "tn": 15,
+      "fn": 12,
+      "fp_cost_inr": 12640,
+      "fn_cost_inr": 22710,
+      "escalation_rate": 0.362,
+      "expected_net_inr": 85237
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.349,
+      "recall": 0.517,
+      "tp": 15,
+      "fp": 28,
+      "tn": 18,
+      "fn": 14,
+      "fp_cost_inr": 19830,
+      "fn_cost_inr": 27130,
+      "escalation_rate": 0.062,
+      "expected_net_inr": 80571
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.348,
+      "recall": 0.533,
+      "tp": 16,
+      "fp": 30,
+      "tn": 19,
+      "fn": 14,
+      "fp_cost_inr": 21130,
+      "fn_cost_inr": 27130,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 81021
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.348,
+      "recall": 0.533,
+      "tp": 16,
+      "fp": 30,
+      "tn": 19,
+      "fn": 14,
+      "fp_cost_inr": 21130,
+      "fn_cost_inr": 27130,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 80821
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.34,
+      "recall": 0.533,
+      "tp": 16,
+      "fp": 31,
+      "tn": 19,
+      "fn": 14,
+      "fp_cost_inr": 22570,
+      "fn_cost_inr": 27130,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 80719
+     }
+    ]
+   },
+   "cascade": {
+    "n": 80,
+    "wall_s": 2281.3,
+    "extraction": {
+     "accuracy_known_facts": 0.87,
+     "accuracy_all_facts": 0.9278,
+     "per_fact_known": {
+      "delivery_confirmed": 0.9,
+      "signed_by_cardholder": 0.958,
+      "customer_acknowledged_receipt": 0.972,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 0.886,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 0.756,
+      "prior_undisputed_orders": 0.487,
+      "amount_matches_agreement": 0.964
+     },
+     "llm_calls_per_case": 2.812,
+     "cases_sent_to_llm": 75,
+     "failed_samples": 0,
+     "ungrounded_answers": 1,
+     "tokens": 141226,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1621,
+     "log_loss": 0.4885,
+     "ece": 0.139,
+     "auc": 0.8307,
+     "mae_vs_true_p": 0.0584,
+     "mean_std": 0.057,
+     "coverage_90": 0.875
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -67198,
+      "expected_vs_contest_all_ci95": [
+       -167154,
+       -8770
+      ],
+      "realized_vs_contest_all": -80010,
+      "realized_vs_contest_all_ci95": [
+       -197702,
+       -4464
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 67198,
+      "realized_net_inr": 80010,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 73,
+      "concede": 7,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 88882,
+      "realized_net_inr": 99020,
+      "expected_vs_contest_all": 21684,
+      "expected_vs_contest_all_ci95": [
+       15010,
+       28950
+      ],
+      "realized_vs_contest_all": 19010,
+      "realized_vs_contest_all_ci95": [
+       6390,
+       30251
+      ],
+      "contest": 32,
+      "concede": 46,
+      "escalate": 2
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 89632,
+      "realized_net_inr": 99770,
+      "expected_vs_contest_all": 22434,
+      "expected_vs_contest_all_ci95": [
+       15865,
+       29579
+      ],
+      "realized_vs_contest_all": 19760,
+      "realized_vs_contest_all_ci95": [
+       7340,
+       30810
+      ],
+      "contest": 34,
+      "concede": 46,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 92072
+    },
+    "classification": {
+     "precision": 0.531,
+     "recall": 0.586,
+     "tp": 17,
+     "fp": 15,
+     "tn": 34,
+     "fn": 12,
+     "fp_cost_inr": 11340,
+     "fn_cost_inr": 26210,
+     "escalation_rate": 0.025
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 1.0,
+      "recall": 0.562,
+      "tp": 9,
+      "fp": 0,
+      "tn": 9,
+      "fn": 7,
+      "fp_cost_inr": 0,
+      "fn_cost_inr": 15000,
+      "escalation_rate": 0.688,
+      "expected_net_inr": 92072
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.552,
+      "recall": 0.571,
+      "tp": 16,
+      "fp": 13,
+      "tn": 34,
+      "fn": 12,
+      "fp_cost_inr": 8570,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.062,
+      "expected_net_inr": 90449
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.531,
+      "recall": 0.586,
+      "tp": 17,
+      "fp": 15,
+      "tn": 34,
+      "fn": 12,
+      "fp_cost_inr": 11340,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.025,
+      "expected_net_inr": 88882
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.545,
+      "recall": 0.6,
+      "tp": 18,
+      "fp": 15,
+      "tn": 34,
+      "fn": 12,
+      "fp_cost_inr": 11340,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 89332
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.545,
+      "recall": 0.6,
+      "tp": 18,
+      "fp": 15,
+      "tn": 34,
+      "fn": 12,
+      "fp_cost_inr": 11340,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 89132
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.529,
+      "recall": 0.6,
+      "tp": 18,
+      "fp": 16,
+      "tn": 34,
+      "fn": 12,
+      "fp_cost_inr": 11740,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 89632
+     }
+    ]
+   },
+   "llm": {
+    "n": 80,
+    "wall_s": 140.6,
+    "extraction": {
+     "accuracy_known_facts": 0.8947,
+     "accuracy_all_facts": 0.9389,
+     "per_fact_known": {
+      "delivery_confirmed": 1.0,
+      "signed_by_cardholder": 0.958,
+      "customer_acknowledged_receipt": 0.972,
+      "item_matches_description": 1.0,
+      "return_or_refund_offered": 0.886,
+      "avs_cvv_match": 1.0,
+      "ip_consistent_with_cardholder": 0.805,
+      "prior_undisputed_orders": 0.487,
+      "amount_matches_agreement": 1.0
+     },
+     "llm_calls_per_case": 3.0,
+     "cases_sent_to_llm": 80,
+     "failed_samples": 1,
+     "ungrounded_answers": 1,
+     "tokens": 6986,
+     "degraded_runs": 0
+    },
+    "probability": {
+     "brier": 0.1596,
+     "log_loss": 0.4834,
+     "ece": 0.1197,
+     "auc": 0.8407,
+     "mae_vs_true_p": 0.0472,
+     "mean_std": 0.0562,
+     "coverage_90": 0.9
+    },
+    "policy": {
+     "concede_all": {
+      "expected_net_inr": 0,
+      "realized_net_inr": 0,
+      "expected_vs_contest_all": -67198,
+      "expected_vs_contest_all_ci95": [
+       -167154,
+       -8770
+      ],
+      "realized_vs_contest_all": -80010,
+      "realized_vs_contest_all_ci95": [
+       -197702,
+       -4464
+      ],
+      "contest": 0,
+      "concede": 80,
+      "escalate": 0
+     },
+     "contest_all": {
+      "expected_net_inr": 67198,
+      "realized_net_inr": 80010,
+      "expected_vs_contest_all": 0,
+      "expected_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "realized_vs_contest_all": 0,
+      "realized_vs_contest_all_ci95": [
+       0,
+       0
+      ],
+      "contest": 73,
+      "concede": 7,
+      "escalate": 0
+     },
+     "abstain": {
+      "expected_net_inr": 90641,
+      "realized_net_inr": 102060,
+      "expected_vs_contest_all": 23444,
+      "expected_vs_contest_all_ci95": [
+       16410,
+       30998
+      ],
+      "realized_vs_contest_all": 22050,
+      "realized_vs_contest_all_ci95": [
+       8659,
+       33841
+      ],
+      "contest": 30,
+      "concede": 48,
+      "escalate": 2
+     },
+     "abstain_no_escalation": {
+      "expected_net_inr": 91391,
+      "realized_net_inr": 102810,
+      "expected_vs_contest_all": 24194,
+      "expected_vs_contest_all_ci95": [
+       17296,
+       31440
+      ],
+      "realized_vs_contest_all": 22800,
+      "realized_vs_contest_all_ci95": [
+       9700,
+       34224
+      ],
+      "contest": 32,
+      "concede": 48,
+      "escalate": 0
+     },
+     "_oracle_optimum_expected_net_inr": 92072
+    },
+    "classification": {
+     "precision": 0.567,
+     "recall": 0.586,
+     "tp": 17,
+     "fp": 13,
+     "tn": 36,
+     "fn": 12,
+     "fp_cost_inr": 8300,
+     "fn_cost_inr": 26210,
+     "escalation_rate": 0.025
+    },
+    "boundary_sweep": [
+     {
+      "review_cost_inr": 0,
+      "precision": 1.0,
+      "recall": 0.533,
+      "tp": 8,
+      "fp": 0,
+      "tn": 9,
+      "fn": 7,
+      "fp_cost_inr": 0,
+      "fn_cost_inr": 15000,
+      "escalation_rate": 0.7,
+      "expected_net_inr": 92072
+     },
+     {
+      "review_cost_inr": 100,
+      "precision": 0.571,
+      "recall": 0.571,
+      "tp": 16,
+      "fp": 12,
+      "tn": 36,
+      "fn": 12,
+      "fp_cost_inr": 7450,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.05,
+      "expected_net_inr": 91384
+     },
+     {
+      "review_cost_inr": 300,
+      "precision": 0.567,
+      "recall": 0.586,
+      "tp": 17,
+      "fp": 13,
+      "tn": 36,
+      "fn": 12,
+      "fp_cost_inr": 8300,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.025,
+      "expected_net_inr": 90641
+     },
+     {
+      "review_cost_inr": 600,
+      "precision": 0.581,
+      "recall": 0.6,
+      "tp": 18,
+      "fp": 13,
+      "tn": 36,
+      "fn": 12,
+      "fp_cost_inr": 8300,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 91091
+     },
+     {
+      "review_cost_inr": 1000,
+      "precision": 0.581,
+      "recall": 0.6,
+      "tp": 18,
+      "fp": 13,
+      "tn": 36,
+      "fn": 12,
+      "fp_cost_inr": 8300,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.013,
+      "expected_net_inr": 90891
+     },
+     {
+      "review_cost_inr": "\u221e (never escalate)",
+      "precision": 0.562,
+      "recall": 0.6,
+      "tp": 18,
+      "fp": 14,
+      "tn": 36,
+      "fn": 12,
+      "fp_cost_inr": 8700,
+      "fn_cost_inr": 26210,
+      "escalation_rate": 0.0,
+      "expected_net_inr": 91391
+     }
+    ]
+   }
+  }
+ }
+}

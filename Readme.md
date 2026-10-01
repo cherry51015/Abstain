@@ -136,9 +136,22 @@ The rules collapse on wording they were not written for, but the damage is conta
 read are imputed, which widens the uncertainty and routes the unreadable cases (12%) to a human instead of
 guessing. Without imputation the same setting gained only +₹8k, with a CI crossing zero.
 
-**LLM extraction:** the LLM and cascade systems on the same splits are still running (the free-tier provider caps
-tokens per day; responses are cached so the run resumes). The cascade's measured property so far: on familiar
-wording it made **zero LLM calls**, because the rules read every document.
+**With the LLM** (from [`eval/REPORT_LLM.md`](eval/REPORT_LLM.md): `qwen/qwen3.8-27b`, 3 self-consistency samples,
+80 disputes per split because of free-tier rate limits)
+
+| unfamiliar wording | rules only | cascade | LLM | true facts (upper bound) |
+|---|---|---|---|---|
+| fact accuracy (known facts) | 9.3% | 87.0% | **89.5%** | 100% |
+| P(win) AUC | 0.47 | 0.83 | **0.84** | 0.83 |
+| 90%-interval coverage (target 0.90) | 0.83 | 0.88 | **0.90** | 0.86 |
+| Abstain vs contest-everything | +₹13,374 | +₹21,684 | **+₹23,444**, CI [+16,410, +30,998] | +₹24,095 |
+| LLM calls per dispute | 0 | 2.81 | 3.0 | – |
+
+Reading the documents with the LLM lifts fact accuracy from 9.3% to 89.5% on wording the rules were never written
+for, and recovers **97%** of the value available with perfect facts (₹23,444 of ₹24,095). Grounding discarded one
+answer whose quote was not in the documents. The cascade's saving shows on familiar wording, where it made **zero
+LLM calls** because the rules read every document; on unfamiliar wording almost every dispute needs the LLM (75 of
+80), as it should.
 
 ## Design decisions (and what I measured)
 
@@ -235,7 +248,7 @@ stage**:
 **Limitations, stated plainly.**
 - The documents are synthetic, template-based text, so absolute accuracies will not transfer to real evidence. The
   *comparisons* (rules vs LLM under distribution shift, cascade cost, escalation value) are what the eval is for.
-- The LLM run uses a free-tier model on 100 cases per split because of rate limits, so its CIs will be wider.
+- The LLM results cover 80 disputes per split (free-tier rate limits), so their CIs are wider than the 250-case runs.
 - The win model is trained on ground-truth facts standing in for analyst-reviewed history.
 
 ## API
