@@ -7,8 +7,6 @@
 
 ⚙️ **Test the API:** [abstain-api.onrender.com/docs](https://abstain-api.onrender.com/docs)
 
-🎥 **Demo video (earlier version):** [Watch the 5-minute demo](https://drive.google.com/file/d/1kmbxfUQINjY_97tH_sngFnEZVdPCFyCM/view?usp=sharing)
-
 ---
 
 **A chargeback decision service that knows when not to decide.**
