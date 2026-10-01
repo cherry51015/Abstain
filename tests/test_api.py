@@ -144,3 +144,24 @@ def test_metrics_endpoint_exposes_decisions(client):
     client.post("/v1/disputes/evaluate", json=body())
     text = client.get("/metrics").text
     assert "abstain_decisions_total" in text and "abstain_http_request_seconds" in text
+
+
+def test_demo_seed_loads_once_and_feeds_insights(tmp_path):
+    from app.catalog import load_catalog
+    from app.db import Base, build_engine, build_session_factory
+    from app.demo import seed_demo_portfolio
+    from app.engine.decision_engine import DecisionEngine
+    from app.scoring.win_model import WinModel
+
+    url = f"sqlite:///{tmp_path / 'demo.db'}"
+    engine = build_engine(url)
+    Base.metadata.create_all(engine)
+    sessions = build_session_factory(engine)
+    args = (sessions, load_catalog(), WinModel.load(), DecisionEngine())
+    assert seed_demo_portfolio(*args, limit=40) == 40
+    assert seed_demo_portfolio(*args, limit=40) == 0          # never loads twice
+
+    settings = dataclasses.replace(Settings(), database_url=url, llm_api_key=None, api_key=None)
+    with TestClient(create_app(settings)) as c:
+        assert c.get("/v1/reports/portfolio").json()["root_causes"]["resolved"] == 40
+        assert c.get("/ready").json()["demo_data"] is False

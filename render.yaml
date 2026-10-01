@@ -20,6 +20,8 @@ services:
         value: "6"
       - key: EXTRACTION_MODE
         value: cascade
+      - key: DEMO_SEED
+        value: "true"
       - key: CORS_ORIGINS
         value: https://abstain-kappa.vercel.app
 

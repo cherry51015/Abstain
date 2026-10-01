@@ -315,6 +315,7 @@ const FACT = {
 };
 const factName = f => (FACT[f] || [f])[0];
 let merchants = {};
+let demoData = false;
 
 // ---------- theme ----------
 function currentTheme(){ return document.documentElement.dataset.theme
@@ -357,6 +358,7 @@ function show(v){
 // ---------- status + reference data ----------
 async function checkReady(){
   try{ const d = await api('/ready');
+    demoData = !!d.demo_data;
     $('#statusDot').className = 'dot ' + (d.llm_configured ? 'live' : 'rules');
     $('#statusText').textContent = d.llm_configured ? 'Connected · AI reading on' : 'Connected · rules only (no AI key)';
   }catch(e){ $('#statusDot').className = 'dot'; $('#statusText').textContent = 'Cannot reach the API'; }
@@ -630,12 +632,18 @@ async function loadInsights(){
     const all = await api('/v1/reports/portfolio');
     const view = scope ? await api(`/v1/reports/merchants/${scope}`) : all;
     if(!view.root_causes.resolved){
-      out.innerHTML = `<div class="card empty"><div class="big">No final results yet</div>
-        Insights need disputes whose outcome (won or lost) has been recorded. Record outcomes on the
-        “Check a dispute” page, or load the demo portfolio into this database:<br><code class="cmd">python scripts/seed_demo.py</code></div>`;
+      out.innerHTML = demoData
+        ? `<div class="card empty"><div class="big">Loading the sample portfolio…</div>
+            This demo fills itself with 600 sample disputes the first time it starts. It takes about a minute — this page will refresh on its own.</div>`
+        : `<div class="card empty"><div class="big">No final results yet</div>
+            Insights appear once disputes have a recorded result. After a dispute is decided by the card network,
+            use “We won” / “We lost” on the “Check a dispute” page.</div>`;
+      if(demoData) setTimeout(() => { if($('#view-insights').classList.contains('active')) loadInsights(); }, 15000);
       return;
     }
-    out.innerHTML = kpis(view.root_causes, view.calibration, view.economics)
+    const sample = demoData ? `<p class="muted" style="font-size:13px;margin:-6px 0 14px">Showing a sample portfolio of synthetic disputes,
+      generated with a few deliberately planted problems so the analysis has something real to find.</p>` : '';
+    out.innerHTML = sample + kpis(view.root_causes, view.calibration, view.economics)
       + (scope ? merchantFocus(scope, all.weaknesses.merchants[scope], all.weaknesses) : systemicCards(all.weaknesses) + merchantTable(all.weaknesses))
       + whyLost(view.root_causes)
       + (view.root_causes.resolved < 30 ? `<p class="muted" style="font-size:13px">Only ${view.root_causes.resolved} results so far — patterns become reliable after a few hundred.</p>` : '');

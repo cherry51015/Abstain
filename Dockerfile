@@ -10,7 +10,7 @@ RUN pip install -r requirements.txt
 COPY app/ app/
 COPY alembic/ alembic/
 COPY alembic.ini .
-COPY data/reason_codes.json data/merchants.json data/
+COPY data/reason_codes.json data/merchants.json data/disputes_portfolio.jsonl data/
 COPY models/ models/
 
 RUN useradd --create-home --uid 10001 abstain && mkdir -p .cache && chown abstain .cache

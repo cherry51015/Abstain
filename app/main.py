@@ -19,6 +19,7 @@ from app.api.routes import router
 from app.catalog import UnknownReferenceError, load_catalog
 from app.config import Settings
 from app.db import Base, build_engine, build_session_factory
+from app.demo import seed_in_background
 from app.engine.decision_engine import DecisionEngine
 from app.extraction.cache import ResponseCache
 from app.extraction.llm_client import OpenAICompatibleClient
@@ -63,6 +64,9 @@ def create_app(settings: Settings | None = None, *, service: DisputeService | No
         if create_schema:  # tests and throwaway local runs; deployments use `alembic upgrade head`
             Base.metadata.create_all(engine)
         app.state.session_factory = build_session_factory(engine)
+        if settings.demo_seed:
+            s = app.state.service
+            seed_in_background(app.state.session_factory, s.catalog, s.model, s.engine, settings.demo_seed_limit)
         logger.info("startup", extra={"mode": app.state.service.mode, "model_version": app.state.service.model.version})
         yield
         if client:

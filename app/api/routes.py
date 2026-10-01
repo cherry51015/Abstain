@@ -49,7 +49,7 @@ def ready(request: Request, sessions: sessionmaker = Depends(get_sessions)) -> d
         s.execute(text("SELECT 1"))
     service: DisputeService = request.app.state.service
     return {"status": "ready", "model_version": service.model.version, "extraction_mode": service.mode,
-            "llm_configured": service.llm is not None}
+            "llm_configured": service.llm is not None, "demo_data": request.app.state.settings.demo_seed}
 
 
 @router.get("/v1/reference", tags=["reference"])

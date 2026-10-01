@@ -33,3 +33,6 @@ class Settings:
     api_key: str | None = field(default_factory=lambda: os.environ.get("ABSTAIN_API_KEY") or None)
     cors_origins: list[str] = field(default_factory=lambda: _csv("CORS_ORIGINS", "http://localhost:5173,https://abstain-kappa.vercel.app"))
     log_level: str = field(default_factory=lambda: os.environ.get("LOG_LEVEL", "INFO"))
+    # Hosted demo: load a sample of resolved disputes on first start so Insights is not empty.
+    demo_seed: bool = field(default_factory=lambda: os.environ.get("DEMO_SEED", "").lower() in ("1", "true", "yes"))
+    demo_seed_limit: int = field(default_factory=lambda: int(os.environ.get("DEMO_SEED_LIMIT", "600")))
