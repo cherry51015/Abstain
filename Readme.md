@@ -74,12 +74,16 @@ These two outputs come from [`eval/PORTFOLIO_REPORT.md`](eval/PORTFOLIO_REPORT.m
 - The reports must recover exactly the planted problems and nothing else.
 - Result: 4/4 checks pass. Both merchant-specific problems and the systemic gap are found, with zero false alarms.
 
-Two statistical traps the analysis avoids, both caught while building it:
+Three statistical traps the analysis avoids, all caught while building it:
 - **Conditioning on losses.** Measuring weakness only among lost disputes makes every fact look weak, because
   losing cases are weak cases. Rates are measured over all disputes.
 - **Confounding.** A delivery signature cannot exist when nothing was delivered. Counting "no signature" on failed
   deliveries blamed signatures for losses that delivery failure caused. Facts are only counted where they are
   possible ([`FACT_PREREQUISITES`](app/domain.py)).
+- **Multiple comparisons.** 8 merchants × 9 facts is about 70 significance tests, so at a plain 5% threshold a few
+  merchants get flagged by pure chance. On a 600-dispute sample, one was. Merchant-specific flags must survive a
+  **Benjamini–Hochberg** correction across all tests. Gaps that point the same way without enough evidence are shown
+  as *worth watching* instead of being acted on.
 
 **Audit trail.** Every evaluation stores each pipeline step with timings:
 - which documents the rules could not read, and why the LLM was or was not called
@@ -236,7 +240,7 @@ stage**:
 | GET | `/v1/monitoring/calibration` | Live Brier/ECE of P(win) on resolved cases, with drift alert |
 | GET | `/health`, `/ready`, `/metrics` | Liveness, readiness (DB + model), Prometheus |
 
-Interactive docs are at `/docs`. A dependency-free console is in [`frontend/index.html`](frontend/index.html).
+Interactive docs are at `/docs`. A dependency-free console (one HTML file, light and dark themes) is in [`frontend/index.html`](frontend/index.html). It shows the decision in plain English, a win-chance gauge with its likely range and break-even line, the evidence as facts, a checklist of what would change the decision, the review queue, and the insights as charts.
 
 ## Running it
 
@@ -254,6 +258,7 @@ pytest                            # ~100 tests: unit, property-based, HTTP, migr
 python eval/run_eval.py           # offline eval (oracle + rules), no API calls
 python eval/run_eval.py --llm --limit 100   # adds LLM + cascade (uses API quota; cached and resumable)
 python scripts/portfolio_demo.py   # levels 2-3: planted-problem check through the real API
+python scripts/seed_demo.py       # load 600 resolved demo disputes so the Insights page has data (no LLM calls)
 python scripts/generate_dataset.py && python scripts/train_win_model.py   # rebuild data + model
 ```
 

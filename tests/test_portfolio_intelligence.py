@@ -118,3 +118,24 @@ def test_signature_is_not_blamed_when_nothing_was_delivered(catalog):
     w = weaknesses(rows, catalog)
     assert "signed_by_cardholder" not in w["systemic"]
     assert w["facts"]["signed_by_cardholder"]["missing_rate"] == 0.0   # only delivered parcels counted
+
+
+def test_chance_gap_among_many_tests_is_watched_not_flagged(catalog):
+    """8 merchants x 5 fraud facts = 40 tests. A 7-of-8 vs 45% gap (z~2.3, p~0.01) would pass a
+    plain 5% test, but not Benjamini-Hochberg across 40 tests: it is shown as worth watching."""
+    from app.insights import weaknesses
+    facts5 = ["avs_cvv_match", "ip_consistent_with_cardholder", "prior_undisputed_orders",
+              "delivery_confirmed", "signed_by_cardholder"]
+    rows = []
+    for m in ["mch_01", "mch_02", "mch_03", "mch_04", "mch_05", "mch_06", "mch_08"]:
+        for i in range(20):
+            rows.append(row(f"{m}-{i}", m, "10.4", 1000, "lost" if i % 2 else "won",
+                            {f: ("no" if i < 9 else "yes") for f in facts5}))
+    for i in range(8):
+        f = {x: ("no" if i < 4 else "yes") for x in facts5}
+        f["avs_cvv_match"] = "no" if i < 7 else "yes"
+        rows.append(row(f"mch_07-{i}", "mch_07", "10.4", 1000, "lost", f))
+    m7 = weaknesses(rows, catalog)["merchants"]["mch_07"]
+    assert m7["merchant_specific_weaknesses"] == []
+    assert [x["fact"] for x in m7["worth_watching"]] == ["avs_cvv_match"]
+    assert m7["classification"] == "worth watching"

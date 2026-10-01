@@ -2,539 +2,645 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Abstain — Risk Console</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Abstain — Dispute Console</title>
 <style>
+  /* ---------- theme tokens (light default; dark via OS or toggle) ---------- */
   :root{
-    --bg: #101820;
-    --panel: #17222D;
-    --panel-raised: #1D2A36;
-    --hairline: #2A3742;
-    --text: #EDEFF2;
-    --muted: #8B99A6;
-    --contest: #3FA796;
-    --concede: #C1544C;
-    --escalate: #D6A24B;
-    --accent: #5B7FDB;
-    --radius: 3px;
+    color-scheme: light;
+    --page:#f6f5f2; --surface:#fcfcfb; --surface-2:#f1f0ec; --line:#e1e0d9; --border:rgba(11,11,11,.10);
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#7a7873;
+    --accent:#2a78d6; --accent-soft:rgba(42,120,214,.10); --series-2:#eb6834;
+    --band:#b7d3f6; --marker:#2a78d6;
+    --good:#0ca30c; --good-ink:#006300; --good-soft:rgba(12,163,12,.10);
+    --bad:#d03b3b;  --bad-ink:#b3261e;  --bad-soft:rgba(208,59,59,.09);
+    --warn:#fab219; --warn-ink:#8a5a00; --warn-soft:rgba(250,178,25,.16);
+    --shadow:0 1px 2px rgba(11,11,11,.06), 0 4px 16px rgba(11,11,11,.04);
+    --radius:10px;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:'Inter',sans-serif; font-size:14px;
-    display:flex; min-height:100vh;
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --page:#0d0d0d; --surface:#1a1a19; --surface-2:#242422; --line:#2c2c2a; --border:rgba(255,255,255,.10);
+      --ink:#ffffff; --ink-2:#c3c2b7; --muted:#9a998f;
+      --accent:#3987e5; --accent-soft:rgba(57,135,229,.16); --series-2:#d95926;
+      --band:#184f95; --marker:#6da7ec;
+      --good-ink:#33c133; --good-soft:rgba(12,163,12,.16);
+      --bad-ink:#ff7a72; --bad-soft:rgba(208,59,59,.18);
+      --warn-ink:#fab219; --warn-soft:rgba(250,178,25,.14);
+      --shadow:none;
+    }
   }
-  ::selection{ background:var(--accent); color:#fff; }
-
-  /* ---------- left rail ---------- */
-  .rail{
-    width:230px; flex-shrink:0; border-right:1px solid var(--hairline);
-    padding:28px 20px; display:flex; flex-direction:column; gap:26px;
-  }
-  .wordmark{ font-family:'Source Serif 4',serif; font-size:22px; font-weight:600; letter-spacing:-0.01em; }
-  .tagline{ color:var(--muted); font-size:12px; margin-top:4px; line-height:1.55; }
-
-  nav{ display:flex; flex-direction:column; gap:3px; }
-  .nav-item{ display:flex; flex-direction:column; }
-  nav button{
-    all:unset; cursor:pointer; padding:9px 10px; border-radius:var(--radius);
-    color:var(--muted); font-size:13.5px; display:flex; align-items:center; gap:8px;
-  }
-  nav button:hover{ background:var(--panel); color:var(--text); }
-  nav button.active{ background:var(--panel-raised); color:var(--text); border-left:2px solid var(--accent); padding-left:8px; }
-  .nav-step{
-    width:16px; height:16px; border-radius:50%; border:1px solid var(--hairline); flex-shrink:0;
-    font-family:'JetBrains Mono',monospace; font-size:9.5px; display:flex; align-items:center; justify-content:center;
-    color:var(--muted);
-  }
-  nav button.active .nav-step{ border-color:var(--accent); color:var(--accent); }
-  .nav-hint{ color:var(--muted); font-size:11px; padding:0 10px 8px 34px; line-height:1.4; }
-
-  .rail-footer{ margin-top:auto; }
-  .status-row{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
-  .dot{ width:7px; height:7px; border-radius:50%; background:var(--muted); flex-shrink:0; }
-  .dot.live{ background:var(--contest); }
-  .dot.fallback{ background:var(--escalate); }
-  .api-input{
-    width:100%; margin-top:10px; background:var(--panel); border:1px solid var(--hairline);
-    color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:11px;
-    padding:6px 8px; border-radius:var(--radius);
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#242422; --line:#2c2c2a; --border:rgba(255,255,255,.10);
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#9a998f;
+    --accent:#3987e5; --accent-soft:rgba(57,135,229,.16); --series-2:#d95926;
+    --band:#184f95; --marker:#6da7ec;
+    --good-ink:#33c133; --good-soft:rgba(12,163,12,.16);
+    --bad-ink:#ff7a72; --bad-soft:rgba(208,59,59,.18);
+    --warn-ink:#fab219; --warn-soft:rgba(250,178,25,.14);
+    --shadow:none;
   }
 
-  /* ---------- main ---------- */
-  main{ flex:1; padding:36px 44px; max-width:940px; }
-  .view{ display:none; }
-  .view.active{ display:block; }
-  h1{ font-family:'Source Serif 4',serif; font-weight:600; font-size:23px; margin:0 0 6px; }
-  .sub{ color:var(--muted); font-size:13px; margin:0 0 24px; max-width:66ch; line-height:1.65; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--page); color:var(--ink); display:flex; min-height:100vh;
+    font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  button{ font:inherit; color:inherit; }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .num{ font-variant-numeric:tabular-nums; }
 
-  .panel{
-    background:var(--panel); border:1px solid var(--hairline); border-radius:var(--radius);
-    padding:20px 22px; margin-bottom:18px;
-  }
-  .panel h2{ font-size:12.5px; text-transform:none; color:var(--muted); margin:0 0 14px; font-weight:500; }
+  /* ---------- side rail ---------- */
+  .rail{ width:248px; flex-shrink:0; padding:24px 16px; display:flex; flex-direction:column; gap:22px;
+    border-right:1px solid var(--line); background:var(--surface); position:sticky; top:0; height:100vh; }
+  .brand{ font-size:21px; font-weight:700; letter-spacing:-.02em; }
+  .brand-sub{ color:var(--ink-2); font-size:12.5px; margin-top:4px; line-height:1.5; }
+  nav{ display:flex; flex-direction:column; gap:4px; }
+  nav button{ all:unset; cursor:pointer; padding:10px 12px; border-radius:8px; display:flex; flex-direction:column; gap:2px; }
+  nav button:hover{ background:var(--surface-2); }
+  nav button.active{ background:var(--accent-soft); }
+  nav .t{ font-weight:600; font-size:14px; }
+  nav button.active .t{ color:var(--accent); }
+  nav .h{ color:var(--muted); font-size:12px; }
+  .rail-foot{ margin-top:auto; display:flex; flex-direction:column; gap:8px; font-size:12px; color:var(--ink-2); }
+  .status{ display:flex; align-items:center; gap:8px; }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
+  .dot.live{ background:var(--good); } .dot.rules{ background:var(--warn); }
+  .rail input{ width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-2);
+    padding:6px 8px; border-radius:6px; font:12px ui-monospace,Consolas,monospace; }
+  .theme-btn{ all:unset; cursor:pointer; padding:6px 8px; border:1px solid var(--line); border-radius:6px; text-align:center; }
 
-  /* form */
+  /* ---------- layout ---------- */
+  main{ flex:1; padding:32px 40px 64px; max-width:1060px; min-width:0; }
+  .view{ display:none; } .view.active{ display:block; }
+  h1{ font-size:26px; letter-spacing:-.02em; margin:0 0 6px; }
+  .lead{ color:var(--ink-2); margin:0 0 22px; max-width:70ch; }
+  h2{ font-size:15px; margin:0 0 4px; }
+  .sub{ color:var(--muted); font-size:13px; margin:0 0 14px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-bottom:16px; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; }
-  input[type=text], input[type=number], select, textarea{
-    width:100%; background:var(--panel-raised); border:1px solid var(--hairline); color:var(--text);
-    padding:8px 10px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px;
-  }
-  input:focus, select:focus, textarea:focus, button:focus-visible{
-    outline:2px solid var(--accent); outline-offset:1px;
-  }
-  textarea{ resize:vertical; min-height:52px; }
-  .field{ margin-bottom:14px; }
-  .checks{ display:flex; flex-wrap:wrap; gap:10px; }
-  .checks label{ display:flex; align-items:center; gap:6px; color:var(--text); font-size:13px; margin:0; }
-  .checks input{ width:auto; }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  label{ display:block; font-size:12.5px; color:var(--ink-2); margin-bottom:5px; font-weight:500; }
+  input[type=text],input[type=number],select,textarea{ width:100%; background:var(--surface); color:var(--ink);
+    border:1px solid var(--line); border-radius:8px; padding:9px 11px; font:inherit; font-size:14px; }
+  textarea{ font:12.5px/1.5 ui-monospace,Consolas,monospace; min-height:70px; resize:vertical; }
+  .btn{ all:unset; cursor:pointer; background:var(--accent); color:#fff; padding:10px 18px; border-radius:8px; font-weight:600; }
+  .btn:disabled{ opacity:.5; cursor:default; }
+  .btn-2{ all:unset; cursor:pointer; padding:7px 13px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-size:13.5px; }
+  .btn-2:hover{ border-color:var(--accent); }
+  .chips-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pill{ all:unset; cursor:pointer; padding:7px 13px; border-radius:999px; border:1px solid var(--line); font-size:13px; background:var(--surface); }
+  .pill:hover{ border-color:var(--accent); color:var(--accent); }
+  .error{ color:var(--bad-ink); font-size:13.5px; margin-top:10px; }
+  .muted{ color:var(--muted); }
+  details.more summary{ cursor:pointer; color:var(--ink-2); font-size:13.5px; font-weight:600; }
+  details.more[open] summary{ margin-bottom:10px; }
 
-  button.primary{
-    all:unset; cursor:pointer; background:var(--accent); color:#fff; padding:10px 18px;
-    border-radius:var(--radius); font-size:13.5px; font-weight:500;
-  }
-  button.primary:hover{ filter:brightness(1.08); }
-  button.primary:disabled{ opacity:0.5; cursor:default; }
-  button.ghost{
-    all:unset; cursor:pointer; color:var(--accent); font-size:13px; padding:8px 4px; font-weight:500;
-  }
-  button.ghost:hover{ text-decoration:underline; }
+  /* ---------- decision hero ---------- */
+  .hero{ border-radius:var(--radius); padding:22px 24px; margin-bottom:16px; border:1px solid var(--border);
+    display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; }
+  .hero.CONTEST{ background:var(--good-soft); } .hero.CONCEDE{ background:var(--bad-soft); } .hero.ESCALATE{ background:var(--warn-soft); }
+  .hero .icon{ width:52px; height:52px; border-radius:50%; display:grid; place-items:center; font-size:26px; font-weight:800; color:#fff; }
+  .hero.CONTEST .icon{ background:var(--good); } .hero.CONCEDE .icon{ background:var(--bad); }
+  .hero.ESCALATE .icon{ background:var(--warn); color:#3a2600; }
+  .hero .verdict{ font-size:24px; font-weight:750; letter-spacing:-.02em; }
+  .hero.CONTEST .verdict{ color:var(--good-ink); } .hero.CONCEDE .verdict{ color:var(--bad-ink); } .hero.ESCALATE .verdict{ color:var(--warn-ink); }
+  .hero .why{ color:var(--ink-2); margin-top:2px; }
+  .sure{ font-size:12.5px; padding:5px 10px; border-radius:999px; background:var(--surface); border:1px solid var(--border); white-space:nowrap; }
 
-  /* verdict */
-  .verdict{ display:flex; align-items:baseline; gap:14px; margin-bottom:6px; flex-wrap:wrap; }
-  .verdict-action{ font-family:'Source Serif 4',serif; font-size:30px; font-weight:600; }
-  .verdict-action.CONTEST{ color:var(--contest); }
-  .verdict-action.CONCEDE{ color:var(--concede); }
-  .verdict-action.ESCALATE{ color:var(--escalate); }
-  .verdict-meta{ color:var(--muted); font-size:12.5px; font-family:'JetBrains Mono',monospace; }
+  /* ---------- tiles ---------- */
+  .tile{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+  .tile .k{ font-size:12.5px; color:var(--ink-2); }
+  .tile .v{ font-size:24px; font-weight:700; letter-spacing:-.02em; margin-top:2px; }
+  .tile .d{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .tile .v.good{ color:var(--good-ink); } .tile .v.bad{ color:var(--bad-ink); } .tile .v.warn{ color:var(--warn-ink); }
 
-  .memo{
-    font-family:'Source Serif 4',serif; font-size:14.5px; line-height:1.75; white-space:pre-wrap;
-    background:var(--panel-raised); border-left:2px solid var(--hairline); padding:14px 18px;
-    border-radius:0 var(--radius) var(--radius) 0; margin-top:14px;
-  }
-  .verdict-action.CONTEST + .verdict-meta ~ .memo{ border-left-color:var(--contest); }
+  /* ---------- win-chance gauge ---------- */
+  .gauge{ position:relative; height:46px; margin:30px 0 26px; }
+  .gauge .track{ position:absolute; inset:16px 0; border-radius:7px; overflow:hidden; display:flex; }
+  .gauge .lose{ background:var(--bad-soft); } .gauge .win{ background:var(--good-soft); flex:1; }
+  .gauge .band{ position:absolute; top:16px; height:14px; background:var(--band); border-radius:7px; opacity:.95; }
+  .gauge .mark{ position:absolute; top:11px; width:24px; height:24px; margin-left:-12px; border-radius:50%;
+    background:var(--marker); border:3px solid var(--surface); box-shadow:0 0 0 1px var(--border); }
+  .gauge .be{ position:absolute; top:4px; bottom:4px; width:2px; margin-left:-1px; background:var(--ink); }
+  .gauge .be-l{ position:absolute; top:-18px; transform:translateX(-50%); font-size:12px; white-space:nowrap; color:var(--ink-2); }
+  .gauge .p-l{ position:absolute; bottom:-22px; transform:translateX(-50%); font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .gauge .ax{ position:absolute; bottom:-22px; font-size:11.5px; color:var(--muted); }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-2); margin-top:6px; }
+  .legend i{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-2px; }
 
-  /* next-step nudge, driven only by the action string already in the response */
-  .nudge{
-    margin-top:14px; padding:12px 15px; border-radius:var(--radius); font-size:13px;
-    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    background:var(--panel-raised); border:1px dashed var(--hairline); color:var(--muted);
-  }
-  .nudge span{ line-height:1.5; }
+  /* ---------- fact chips ---------- */
+  .facts{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; }
+  .fact{ border:1px solid var(--border); border-radius:9px; padding:10px 12px; display:flex; gap:10px; align-items:flex-start; background:var(--surface); }
+  .fact .ic{ flex-shrink:0; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:13px; color:#fff; }
+  .fact.yes .ic{ background:var(--good); } .fact.no .ic{ background:var(--bad); }
+  .fact.unknown .ic{ background:var(--muted); } .fact.unread .ic{ background:var(--warn); color:#3a2600; }
+  .fact .n{ font-weight:600; font-size:13.5px; }
+  .fact .s{ font-size:12.5px; color:var(--ink-2); }
+  .fact.yes .s b{ color:var(--good-ink); } .fact.no .s b{ color:var(--bad-ink); } .fact.unread .s b{ color:var(--warn-ink); }
 
-  .auditlog{ list-style:none; margin:0; padding:0; }
-  .auditlog li{
-    padding:8px 0 8px 16px; border-left:1px solid var(--hairline); font-size:12.5px;
-    color:var(--muted); font-family:'JetBrains Mono',monospace; position:relative;
-  }
-  .auditlog li::before{
-    content:''; position:absolute; left:-4px; top:13px; width:7px; height:7px;
-    border-radius:50%; background:var(--hairline);
-  }
+  /* ---------- checklist (what would change it) ---------- */
+  .todo{ display:grid; grid-template-columns:1fr auto; gap:6px 16px; align-items:center; padding:12px 14px;
+    border:1px solid var(--border); border-radius:9px; margin-bottom:8px; background:var(--surface); }
+  .todo .what{ font-weight:600; }
+  .todo .how{ font-size:12.5px; color:var(--ink-2); }
+  .todo .gain{ text-align:right; font-weight:700; color:var(--good-ink); font-size:17px; }
+  .todo .after{ text-align:right; font-size:12.5px; color:var(--ink-2); }
+  .tag{ display:inline-block; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:999px; margin-right:6px; }
+  .tag.missing{ background:var(--accent-soft); color:var(--accent); }
+  .tag.unread{ background:var(--warn-soft); color:var(--warn-ink); }
+  .tag.adverse{ background:var(--bad-soft); color:var(--bad-ink); }
 
-  /* tables */
-  table{ width:100%; border-collapse:collapse; font-size:13px; }
-  th{ text-align:left; color:var(--muted); font-weight:500; font-size:11.5px; padding:6px 10px; border-bottom:1px solid var(--hairline); }
-  td{ padding:9px 10px; border-bottom:1px solid var(--hairline); font-family:'JetBrains Mono',monospace; font-size:12.5px; }
+  ol.steps{ margin:0; padding-left:20px; color:var(--ink-2); font-size:13px; }
+  ol.steps li{ margin-bottom:6px; } ol.steps code{ font-size:12px; }
+  .foot{ font:12px ui-monospace,Consolas,monospace; color:var(--muted); margin-top:10px; }
+
+  /* ---------- bars (insights) ---------- */
+  .bars{ display:flex; flex-direction:column; gap:12px; }
+  .bar-row{ display:grid; grid-template-columns:minmax(150px,240px) 1fr; gap:12px; align-items:center; }
+  .bar-row .lbl{ font-size:13.5px; }
+  .bar-track{ height:18px; display:flex; gap:2px; }
+  .seg{ height:100%; min-width:2px; }
+  .seg:first-child{ border-radius:4px 0 0 4px; } .seg:last-child{ border-radius:0 4px 4px 0; } .seg:only-child{ border-radius:4px; }
+  .seg.s1{ background:var(--accent); } .seg.s2{ background:var(--series-2); }
+  .seg.rest{ background:var(--line); } .seg.lost-hi{ background:var(--bad); } .seg.lost-lo{ background:var(--muted); }
+  .bar-val{ font-size:12.5px; color:var(--ink-2); margin-left:8px; white-space:nowrap; }
+  .pair{ display:flex; flex-direction:column; gap:4px; min-width:140px; }
+  .pair .r{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-2); }
+  .pair .t{ height:9px; border-radius:4px; }
+  .callout{ border-left:4px solid var(--warn); background:var(--warn-soft); border-radius:0 var(--radius) var(--radius) 0; padding:14px 18px; margin-bottom:12px; }
+  .callout .ttl{ font-weight:700; margin-bottom:4px; }
+  .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .badge.specific{ background:var(--bad-soft); color:var(--bad-ink); }
+  .badge.systemic{ background:var(--warn-soft); color:var(--warn-ink); }
+  .badge.watch{ border:1px dashed var(--warn-ink); color:var(--warn-ink); }
+  .badge.normal{ background:var(--surface-2); color:var(--ink-2); }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; font-weight:600; color:var(--ink-2); font-size:12.5px; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td{ padding:10px; border-bottom:1px solid var(--line); vertical-align:middle; }
   tr:last-child td{ border-bottom:none; }
-  .badge{
-    display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px;
-    font-family:'Inter',sans-serif; font-weight:500;
-  }
-  .badge.CONTEST{ background:rgba(63,167,150,0.15); color:var(--contest); }
-  .badge.CONCEDE{ background:rgba(193,84,76,0.15); color:var(--concede); }
-  .badge.ESCALATE{ background:rgba(214,162,75,0.15); color:var(--escalate); }
+  .scroll{ overflow-x:auto; }
 
-  .empty{ color:var(--muted); font-size:13px; padding:22px 4px; text-align:left; line-height:1.7; }
-  .empty .empty-title{ color:var(--text); font-size:14px; margin-bottom:6px; font-family:'Source Serif 4',serif; }
-  .error{ color:var(--concede); font-size:13px; margin-top:10px; }
-  .report{
-    font-family:'Inter',sans-serif; font-size:13px; line-height:1.65; color:var(--text);
-    max-height:65vh; overflow-y:auto; padding-right:6px;
-  }
-  .report-h1{ font-family:'Source Serif 4',serif; font-weight:600; font-size:19px; margin:0 0 6px; }
-  .report-h2{ font-family:'Source Serif 4',serif; font-weight:600; font-size:15px; margin:22px 0 10px;
-    padding-top:14px; border-top:1px solid var(--hairline); }
-  .report-h2:first-child{ border-top:none; padding-top:0; margin-top:0; }
-  .report-h3{ font-size:13px; font-weight:600; color:var(--text); margin:16px 0 8px; }
-  .report-p{ color:var(--muted); margin:0 0 10px; font-size:13px; }
-  .report-p em{ color:var(--muted); font-style:italic; }
-  .report-list{ margin:0 0 12px; padding-left:20px; }
-  .report-list li{ margin-bottom:5px; color:var(--muted); }
-  .report code{ font-family:'JetBrains Mono',monospace; font-size:11.5px; background:var(--panel-raised);
-    padding:1px 5px; border-radius:3px; color:var(--text); }
-  table.report-table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:16px; }
-  table.report-table th{ text-align:left; color:var(--muted); font-weight:500; font-size:11px;
-    padding:6px 10px; border-bottom:1px solid var(--hairline); }
-  table.report-table td{ padding:8px 10px; border-bottom:1px solid var(--hairline);
-    font-family:'JetBrains Mono',monospace; font-size:12px; }
-  table.report-table tr:last-child td{ border-bottom:none; }
-  .esc-row{ cursor:pointer; }
-  .esc-row:hover td{ background:var(--panel-raised); }
-  .esc-detail td{ font-family:'Source Serif 4',serif; font-size:13px; line-height:1.7; color:var(--muted);
-    white-space:pre-wrap; background:var(--panel-raised); padding:12px 14px; }
-  .esc-hint{ color:var(--muted); font-size:11.5px; margin-top:10px; }
-  .report-controls{ display:flex; gap:10px; margin-bottom:16px; align-items:center; }
-  .report-controls select{ width:auto; }
+  /* ---------- queue ---------- */
+  .qcard{ display:grid; grid-template-columns:44px 1fr auto; gap:14px; align-items:center; }
+  .rank{ width:36px; height:36px; border-radius:50%; background:var(--warn-soft); color:var(--warn-ink); display:grid; place-items:center; font-weight:700; }
+  .mini{ position:relative; height:10px; background:var(--surface-2); border-radius:5px; margin:8px 0 4px; max-width:360px; }
+  .mini .b{ position:absolute; top:0; bottom:0; background:var(--band); border-radius:5px; }
+  .mini .m{ position:absolute; top:-3px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:var(--marker); border:2px solid var(--surface); }
+  .mini .e{ position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--ink); }
 
-  /* ---------- three-way decision strip ---------- */
-  .decision-strip{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--hairline);
-    border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden; margin-bottom:24px; }
-  .decision-strip > div{ background:var(--panel); padding:14px 16px; }
-  .decision-strip .dlabel{ font-family:'Source Serif 4',serif; font-size:15px; font-weight:600; margin-bottom:4px; }
-  .decision-strip .ddesc{ color:var(--muted); font-size:12px; line-height:1.5; }
-  .decision-strip .dlabel.CONTEST{ color:var(--contest); }
-  .decision-strip .dlabel.CONCEDE{ color:var(--concede); }
-  .decision-strip .dlabel.ESCALATE{ color:var(--escalate); }
+  .empty{ text-align:center; padding:36px 16px; color:var(--ink-2); }
+  .empty .big{ font-size:17px; font-weight:650; color:var(--ink); margin-bottom:6px; }
+  code.cmd{ display:inline-block; margin-top:8px; padding:6px 10px; background:var(--surface-2); border-radius:6px; font-size:12.5px; }
 
-  /* ---------- evidence toggle chips (same checkbox inputs underneath, restyled) ---------- */
-  .checks{ display:flex; flex-wrap:wrap; gap:8px; }
-  .checks label{
-    position:relative; display:inline-flex; align-items:center; gap:0; margin:0;
-    padding:7px 13px; border-radius:14px; border:1px solid var(--hairline); background:var(--panel-raised);
-    color:var(--muted); font-size:12.5px; cursor:pointer; transition:border-color .12s, color .12s, background .12s;
-  }
-  .checks label:has(input:checked){ border-color:var(--contest); color:var(--text); background:rgba(63,167,150,0.12); }
-  .checks input{ position:absolute; opacity:0; width:0; height:0; }
+  #tip{ position:fixed; pointer-events:none; z-index:10; background:var(--ink); color:var(--surface); font-size:12.5px;
+    padding:6px 9px; border-radius:6px; max-width:280px; display:none; }
 
-  /* ---------- verdict entrance (single orchestrated moment, not per-card) ---------- */
-  @media (prefers-reduced-motion: no-preference){
-    #resultPanel{ animation:resultIn .35s ease-out; }
+  @media (max-width: 860px){
+    body{ flex-direction:column; } .rail{ position:static; width:auto; height:auto; border-right:0; border-bottom:1px solid var(--line); }
+    nav{ flex-direction:row; flex-wrap:wrap; } nav .h{ display:none; }
+    main{ padding:20px 16px 48px; } .grid2,.grid3,.grid4{ grid-template-columns:1fr 1fr; }
+    .hero{ grid-template-columns:auto 1fr; } .hero .sure{ grid-column:1 / -1; justify-self:start; }
+    .bar-row{ grid-template-columns:1fr; gap:4px; }
   }
-  @keyframes resultIn{
-    from{ opacity:0; transform:translateY(6px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-  .docs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .docs-grid textarea{ font-family:'JetBrains Mono',monospace; font-size:12px; min-height:74px; }
-  .presets{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-  .presets button{ all:unset; cursor:pointer; font-size:12.5px; padding:6px 12px; border-radius:14px;
-    border:1px solid var(--hairline); color:var(--muted); background:var(--panel-raised); }
-  .presets button:hover{ color:var(--text); border-color:var(--accent); }
-  .kv{ display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--hairline);
-    border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden; margin-top:14px; }
-  .kv > div{ background:var(--panel-raised); padding:10px 12px; }
-  .kv .k{ color:var(--muted); font-size:11px; margin-bottom:3px; }
-  .kv .v{ font-family:'JetBrains Mono',monospace; font-size:13px; }
-  .reasons{ margin:14px 0 0; padding-left:18px; color:var(--text); line-height:1.65; font-size:13px; }
-  .fact-yes{ color:var(--contest); } .fact-no{ color:var(--concede); } .fact-unknown{ color:var(--muted); }
-  .footnote{ color:var(--muted); font-size:11.5px; font-family:'JetBrains Mono',monospace; margin-top:12px; }
-  .inline-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; }
-  .inline-actions input{ width:160px; }
-  button.small{ all:unset; cursor:pointer; font-size:12.5px; padding:6px 12px; border-radius:var(--radius);
-    border:1px solid var(--hairline); background:var(--panel-raised); }
-  button.small:hover{ border-color:var(--accent); }
-  @media (max-width: 820px){ body{ flex-direction:column; } .rail{ width:auto; } .grid2,.docs-grid,.kv{ grid-template-columns:1fr; } main{ padding:24px 16px; } }
+  @media (max-width: 520px){ .grid2,.grid3,.grid4{ grid-template-columns:1fr; } }
+  @media (prefers-reduced-motion: no-preference){ #result > *{ animation:fadeUp .3s ease-out both; } }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
 </style>
 </head>
 <body>
 
-<div class="rail">
+<aside class="rail">
   <div>
-    <div class="wordmark">Abstain</div>
-    <div class="tagline">The LLM reads the evidence.<br>A calibrated model estimates.<br>A deterministic policy decides.</div>
+    <div class="brand">Abstain</div>
+    <div class="brand-sub">Decides which card disputes to fight, which to accept, and which need a person — and explains why.</div>
   </div>
   <nav>
-    <div class="nav-item">
-      <button data-view="evaluate" class="active"><span class="nav-step">1</span>Evaluate a dispute</button>
-      <div class="nav-hint">Paste evidence, get a priced decision.</div>
-    </div>
-    <div class="nav-item">
-      <button data-view="escalations"><span class="nav-step">2</span>Review queue</button>
-      <div class="nav-hint">Cases where a human is worth the cost.</div>
-    </div>
-    <div class="nav-item">
-      <button data-view="reports"><span class="nav-step">3</span>Insights</button>
-      <div class="nav-hint">Why disputes are lost; is P(win) still calibrated?</div>
-    </div>
+    <button data-view="evaluate" class="active"><span class="t">Check a dispute</span><span class="h">Get a decision with reasons</span></button>
+    <button data-view="queue"><span class="t">Needs a person</span><span class="h">Cases worth a human's time</span></button>
+    <button data-view="insights"><span class="t">Insights</span><span class="h">Why disputes are being lost</span></button>
   </nav>
-  <div class="rail-footer">
-    <div class="status-row"><span class="dot" id="statusDot"></span><span id="statusText">checking API…</span></div>
-    <input class="api-input" id="apiBase" value="https://abstain-api.onrender.com" spellcheck="false" aria-label="API base URL">
-    <input class="api-input" id="apiKey" placeholder="X-API-Key (if required)" spellcheck="false" aria-label="API key">
+  <div class="rail-foot">
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></div>
+    <input id="apiBase" value="https://abstain-api.onrender.com" spellcheck="false" aria-label="API address">
+    <input id="apiKey" placeholder="API key (only if required)" spellcheck="false" aria-label="API key">
+    <button class="theme-btn" id="themeBtn" aria-label="Switch colour theme">Switch to dark</button>
   </div>
-</div>
+</aside>
 
 <main>
-
+  <!-- ================= CHECK A DISPUTE ================= -->
   <section class="view active" id="view-evaluate">
-    <h1>Evaluate a dispute</h1>
-    <p class="sub">Documents go through extraction (rules first, the LLM only for what the rules can't read), a calibrated
-      win-probability model, and an expected-value policy. ESCALATE happens only when a human review is worth more than it costs.</p>
+    <h1>Check a dispute</h1>
+    <p class="lead">Paste the evidence you have. Abstain reads it, estimates the chance of winning, and recommends what to do —
+      fight it, accept the loss, or have a person look at it when that is worth the cost.</p>
 
-    <div class="decision-strip">
-      <div><div class="dlabel CONTEST">Contest</div><div class="ddesc">Expected recovery beats the contest cost, and a review would not change that.</div></div>
-      <div><div class="dlabel CONCEDE">Concede</div><div class="ddesc">Contesting loses money in expectation, or there is no time left.</div></div>
-      <div><div class="dlabel ESCALATE">Escalate</div><div class="ddesc">The value of a human resolving the uncertainty exceeds the review cost.</div></div>
+    <div class="card">
+      <h2>Try an example</h2>
+      <p class="sub">Each one fills in the form below.</p>
+      <div class="chips-row">
+        <button class="pill" data-preset="strong">Parcel delivered and signed</button>
+        <button class="pill" data-preset="unreadable">Fraud claim, unusual card record</button>
+        <button class="pill" data-preset="weak">Wrong item sent, no refund offered</button>
+      </div>
     </div>
 
-    <div class="panel">
-      <h2>Examples</h2>
-      <div class="presets">
-        <button data-preset="strong">Strong not-received defence</button>
-        <button data-preset="unreadable">Fraud case, unfamiliar auth record</button>
-        <button data-preset="weak">Substituted item, no refund offered</button>
+    <div class="card">
+      <h2>Dispute details</h2>
+      <p class="sub">Leave a document box empty if you do not have that document.</p>
+      <div class="grid3">
+        <div><label for="f_case_id">Case ID</label><input type="text" id="f_case_id"></div>
+        <div><label for="f_merchant_id">Merchant</label><select id="f_merchant_id"></select></div>
+        <div><label for="f_reason_code">Reason for the dispute</label><select id="f_reason_code"></select></div>
+        <div><label for="f_amount">Amount (₹)</label><input type="number" id="f_amount" min="1"></div>
+        <div><label for="f_cardholder">Cardholder name</label><input type="text" id="f_cardholder"></div>
+        <div><label for="f_days">Days left to respond</label><input type="number" id="f_days" min="0"></div>
       </div>
-      <div class="grid2">
-        <div class="field"><label for="f_case_id">Case ID</label><input type="text" id="f_case_id"></div>
-        <div class="field"><label for="f_merchant_id">Merchant</label><select id="f_merchant_id"></select></div>
-        <div class="field"><label for="f_reason_code">Reason code</label><select id="f_reason_code"></select></div>
-        <div class="field"><label for="f_amount">Amount (₹)</label><input type="number" id="f_amount" min="1"></div>
-        <div class="field"><label for="f_cardholder">Cardholder name</label><input type="text" id="f_cardholder"></div>
-        <div class="field"><label for="f_days">Days left to respond</label><input type="number" id="f_days" min="0"></div>
-      </div>
-      <div class="field"><div class="checks"><label><input type="checkbox" id="f_repeat"> Repeat / arbitration dispute</label></div></div>
-      <label>Evidence documents (leave blank if not available)</label>
-      <div class="docs-grid" id="docs"></div>
-      <div style="margin-top:16px"><button class="primary" id="btnEvaluate">Evaluate</button></div>
-      <div class="error" id="evalError" style="display:none;"></div>
+      <label style="margin:12px 0 16px;display:flex;gap:8px;align-items:center;font-weight:400">
+        <input type="checkbox" id="f_repeat"> This is a repeat dispute (second round, higher fees)</label>
+      <div class="grid2" id="docs"></div>
+      <div style="margin-top:18px"><button class="btn" id="btnEvaluate" disabled>Get decision</button></div>
+      <div class="error" id="evalError" hidden></div>
     </div>
 
-    <div id="resultPanel" style="display:none;"></div>
+    <div id="result"></div>
   </section>
 
-  <section class="view" id="view-escalations">
-    <h1>Review queue</h1>
-    <p class="sub">Open escalations ranked by net value of review (value of information minus review cost), not by arrival order.</p>
-    <div class="panel">
-      <button class="primary" id="btnLoadEsc" style="margin-bottom:14px;">Refresh queue</button>
-      <div id="escTable"><div class="empty">Click "Refresh queue".</div></div>
-    </div>
+  <!-- ================= NEEDS A PERSON ================= -->
+  <section class="view" id="view-queue">
+    <h1>Needs a person</h1>
+    <p class="lead">Disputes the system chose not to decide alone, because a person checking them is worth more than it costs.
+      The most valuable ones are at the top — not the oldest.</p>
+    <div style="margin-bottom:14px"><button class="btn-2" id="btnQueue">Refresh</button></div>
+    <div id="queue"></div>
   </section>
 
-  <section class="view" id="view-reports">
+  <!-- ================= INSIGHTS ================= -->
+  <section class="view" id="view-insights">
     <h1>Insights</h1>
-    <p class="sub">Built from disputes whose network outcome has been recorded. Record outcomes from an evaluation result to populate it.</p>
-    <div class="panel">
-      <div class="report-controls">
-        <select id="reportScope" aria-label="Report scope"><option value="portfolio">Whole portfolio</option></select>
-        <button class="primary" id="btnLoadReport">Load report</button>
-      </div>
-      <div class="report" id="reportOut"><p class="report-p">Select a scope and load a report.</p></div>
+    <p class="lead">Learned from disputes whose final result (won or lost) has been recorded. It answers three questions:
+      what is going wrong across the whole business, which merchants have their own problems, and what evidence keeps going missing.</p>
+    <div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label for="scope" style="margin:0">Show</label>
+      <select id="scope" style="width:auto;min-width:240px"><option value="">Whole business</option></select>
+      <button class="btn-2" id="btnInsights">Refresh</button>
     </div>
+    <div id="insights"></div>
   </section>
-
 </main>
+<div id="tip" role="tooltip"></div>
 
 <script>
 const $ = s => document.querySelector(s);
-if(['localhost', '127.0.0.1'].includes(location.hostname)) $('#apiBase').value = 'http://localhost:8000';
-const esc =s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-const apiBase = () => $('#apiBase').value.replace(/\/$/, '');
-const inr = n => '₹' + Math.round(Number(n)).toLocaleString('en-IN');
-const DOC_TYPES = ['carrier_record','customer_messages','order_record','fulfilment_record','refund_record','invoice'];
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const inr = n => (n < 0 ? '−' : '') + '₹' + Math.round(Math.abs(Number(n))).toLocaleString('en-IN');
+const pct = (x, d = 0) => x == null ? '–' : (x * 100).toFixed(d) + '%';
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+if(['localhost','127.0.0.1'].includes(location.hostname)) $('#apiBase').value = 'http://localhost:8000';
 
+const DOC_TYPES = {carrier_record:'Courier / delivery record', customer_messages:'Messages from the customer',
+  order_record:'Order & payment record', fulfilment_record:'Warehouse / packing record', refund_record:'Refund & returns record', invoice:'Invoice'};
+const FACT = {
+  delivery_confirmed:            ['Delivered to the address',               'Delivery proof'],
+  signed_by_cardholder:          ['Signed for by the cardholder',           "The cardholder's signature"],
+  customer_acknowledged_receipt: ['Customer admitted it arrived',           "The customer's admission that it arrived"],
+  item_matches_description:      ['Item matched the listing',               'Proof the item matched the listing'],
+  return_or_refund_offered:      ['A refund or return was offered',         'Proof a refund or return was offered'],
+  avs_cvv_match:                 ['Card address and CVV checks passed',     'Card address and CVV check results'],
+  ip_consistent_with_cardholder: ["Ordered from the cardholder's location", 'Location of the order'],
+  prior_undisputed_orders:       ['Has past orders with no disputes',       "The customer's order history"],
+  amount_matches_agreement:      ['Charged amount matches what was agreed', 'Proof of the agreed amount'],
+};
+const factName = f => (FACT[f] || [f])[0];
+let merchants = {};
+
+// ---------- theme ----------
+function currentTheme(){ return document.documentElement.dataset.theme
+  || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+function setTheme(t){ document.documentElement.dataset.theme = t;
+  $('#themeBtn').textContent = t === 'dark' ? 'Switch to light' : 'Switch to dark';
+  try{ localStorage.setItem('abstain-theme', t); }catch(e){} }
+try{ const saved = localStorage.getItem('abstain-theme'); if(saved) setTheme(saved); }catch(e){}
+$('#themeBtn').textContent = currentTheme() === 'dark' ? 'Switch to light' : 'Switch to dark';
+$('#themeBtn').onclick = () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+
+// ---------- tooltips: any element with data-tip ----------
+const tip = $('#tip');
+document.addEventListener('mouseover', e => { const t = e.target.closest('[data-tip]');
+  if(t){ tip.textContent = t.dataset.tip; tip.style.display = 'block'; } });
+document.addEventListener('mousemove', e => { if(tip.style.display === 'block'){
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 300) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; } });
+document.addEventListener('mouseout', e => { if(e.target.closest('[data-tip]')) tip.style.display = 'none'; });
+
+// ---------- api ----------
+const apiBase = () => $('#apiBase').value.replace(/\/$/, '');
 async function api(path, opts = {}){
   const headers = {'Content-Type':'application/json', ...(opts.headers || {})};
-  const key = $('#apiKey').value.trim();
-  if(key) headers['X-API-Key'] = key;
+  const key = $('#apiKey').value.trim(); if(key) headers['X-API-Key'] = key;
   const r = await fetch(apiBase() + path, {...opts, headers});
   const body = await r.json().catch(() => ({}));
-  if(!r.ok){
-    const detail = Array.isArray(body.detail) ? body.detail.map(d => `${d.loc.slice(1).join('.')}: ${d.msg}`).join('; ') : body.detail;
-    throw new Error(detail || ('HTTP ' + r.status));
-  }
+  if(!r.ok){ const d = Array.isArray(body.detail) ? body.detail.map(x => `${x.loc.slice(1).join('.')}: ${x.msg}`).join('; ') : body.detail;
+    throw new Error(d || 'Request failed (' + r.status + ')'); }
   return body;
 }
 
 // ---------- nav ----------
-document.querySelectorAll('nav button[data-view]').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
-function switchView(name){
-  document.querySelectorAll('nav button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.view));
+function show(v){
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
+  if(v === 'queue') loadQueue(); if(v === 'insights') loadInsights();
 }
 
 // ---------- status + reference data ----------
 async function checkReady(){
-  const dot = $('#statusDot'), txt = $('#statusText');
-  try{
-    const d = await api('/ready');
-    dot.className = 'dot ' + (d.llm_configured ? 'live' : 'fallback');
-    txt.textContent = `API live · ${d.extraction_mode}${d.llm_configured ? '' : ' (no LLM)'}`;
-  }catch(e){ dot.className = 'dot'; txt.textContent = 'API unreachable'; }
+  try{ const d = await api('/ready');
+    $('#statusDot').className = 'dot ' + (d.llm_configured ? 'live' : 'rules');
+    $('#statusText').textContent = d.llm_configured ? 'Connected · AI reading on' : 'Connected · rules only (no AI key)';
+  }catch(e){ $('#statusDot').className = 'dot'; $('#statusText').textContent = 'Cannot reach the API'; }
 }
 async function loadReference(){
   try{
     const ref = await api('/v1/reference');
-    $('#f_merchant_id').innerHTML = ref.merchants.map(m => `<option value="${m.merchant_id}">${m.merchant_id} — ${esc(m.name)} (${m.risk_tolerance})</option>`).join('');
-    $('#f_reason_code').innerHTML = ref.reason_codes.map(r => `<option value="${r.code}">${r.code} — ${esc(r.label)}</option>`).join('');
-    $('#reportScope').innerHTML = '<option value="portfolio">Whole portfolio</option>' +
-      ref.merchants.map(m => `<option value="${m.merchant_id}">${m.merchant_id} — ${esc(m.name)}</option>`).join('');
-    applyPreset('strong');
-    $('#btnEvaluate').disabled = false;
-  }catch(e){
-    setTimeout(loadReference, 3000);  // API may be cold-starting; keep trying rather than leave empty dropdowns
-  }
+    ref.merchants.forEach(m => merchants[m.merchant_id] = m);
+    $('#f_merchant_id').innerHTML = ref.merchants.map(m => `<option value="${m.merchant_id}">${esc(m.name)}</option>`).join('');
+    $('#f_reason_code').innerHTML = ref.reason_codes.map(r => `<option value="${r.code}">${esc(r.label)} (${r.network} ${r.code})</option>`).join('');
+    $('#scope').innerHTML = '<option value="">Whole business</option>' + ref.merchants.map(m => `<option value="${m.merchant_id}">${esc(m.name)}</option>`).join('');
+    applyPreset('strong'); $('#btnEvaluate').disabled = false;
+  }catch(e){ setTimeout(loadReference, 3000); }   // API may still be starting
 }
-$('#btnEvaluate').disabled = true;
 checkReady(); loadReference(); setInterval(checkReady, 15000);
+const mName = id => merchants[id]?.name || id;
 
 // ---------- evaluate ----------
-$('#docs').innerHTML = DOC_TYPES.map(t => `<div><label for="doc_${t}">${t}</label><textarea id="doc_${t}"></textarea></div>`).join('');
-
+$('#docs').innerHTML = Object.entries(DOC_TYPES).map(([t, l]) =>
+  `<div><label for="doc_${t}">${l}</label><textarea id="doc_${t}"></textarea></div>`).join('');
 const PRESETS = {
-  strong: {merchant_id:'mch_01', reason_code:'13.1', amount_inr:6500, cardholder_name:'Priya Nair', days:9, docs:{
+  strong: {m:'mch_01', rc:'13.1', amt:6500, name:'Priya Nair', days:9, docs:{
     carrier_record:'Tracking ID: DL482910331\nStatus: DELIVERED on 12-Mar 14:05.\nSigned by: P. Nair',
     customer_messages:"From customer (13-Mar): Received the box today. I'm still raising a dispute with my bank."}},
-  unreadable: {merchant_id:'mch_05', reason_code:'10.4', amount_inr:40000, cardholder_name:'Rohan Iyer', days:12, docs:{
+  unreadable: {m:'mch_05', rc:'10.4', amt:40000, name:'Rohan Iyer', days:12, docs:{
     order_record:'Order #44110\nAuth response: address_check=PASS, cvc_check=PASS\nCheckout session from an ISP in Pune; cardholder resides in Pune.\nCustomer since 2021 with 9 fulfilled orders and zero disputes.'}},
-  weak: {merchant_id:'mch_06', reason_code:'13.3', amount_inr:2400, cardholder_name:'Meera Das', days:6, docs:{
+  weak: {m:'mch_06', rc:'13.3', amt:2400, name:'Meera Das', days:6, docs:{
     fulfilment_record:'Stock-out on the listed variant; substituted with a similar model.',
     refund_record:'No return or refund was offered.',
     customer_messages:'From customer (02-Apr): Item arrived but it is the older model, not what was advertised.'}},
 };
-function applyPreset(name){
-  const p = PRESETS[name];
-  $('#f_case_id').value = `demo_${name}_${Date.now().toString(36)}`;
-  $('#f_merchant_id').value = p.merchant_id; $('#f_reason_code').value = p.reason_code;
-  $('#f_amount').value = p.amount_inr; $('#f_cardholder').value = p.cardholder_name; $('#f_days').value = p.days;
-  $('#f_repeat').checked = false;
-  DOC_TYPES.forEach(t => $('#doc_' + t).value = p.docs[t] || '');
+function applyPreset(n){
+  const p = PRESETS[n];
+  $('#f_case_id').value = `demo-${n}-${Date.now().toString(36)}`; $('#f_merchant_id').value = p.m; $('#f_reason_code').value = p.rc;
+  $('#f_amount').value = p.amt; $('#f_cardholder').value = p.name; $('#f_days').value = p.days; $('#f_repeat').checked = false;
+  Object.keys(DOC_TYPES).forEach(t => $('#doc_' + t).value = p.docs[t] || '');
 }
-document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => applyPreset(b.dataset.preset));
 
-$('#btnEvaluate').addEventListener('click', async () => {
-  const errEl = $('#evalError'); errEl.style.display = 'none';
-  const btn = $('#btnEvaluate'); btn.disabled = true; btn.textContent = 'Evaluating…';
-  const payload = {
+$('#btnEvaluate').onclick = async () => {
+  const err = $('#evalError'); err.hidden = true;
+  const btn = $('#btnEvaluate'); btn.disabled = true; btn.textContent = 'Reading the evidence…';
+  const body = {
     case_id: $('#f_case_id').value.trim(), merchant_id: $('#f_merchant_id').value, reason_code: $('#f_reason_code').value,
     amount_inr: Number($('#f_amount').value), cardholder_name: $('#f_cardholder').value.trim(),
     response_deadline_days_left: Number($('#f_days').value), is_repeat_dispute: $('#f_repeat').checked,
-    documents: DOC_TYPES.map(t => ({doc_type: t, text: $('#doc_' + t).value.trim()})).filter(d => d.text),
+    documents: Object.keys(DOC_TYPES).map(t => ({doc_type: t, text: $('#doc_' + t).value.trim()})).filter(d => d.text),
   };
   try{
-    renderResult(await api('/v1/disputes/evaluate', {method:'POST', body: JSON.stringify(payload),
-      headers: {'Idempotency-Key': payload.case_id + ':' + JSON.stringify(payload).length}}));
-  }catch(e){ errEl.textContent = 'Error: ' + e.message; errEl.style.display = 'block'; }
-  finally{ btn.disabled = false; btn.textContent = 'Evaluate'; }
-});
+    const d = await api('/v1/disputes/evaluate', {method:'POST', body: JSON.stringify(body),
+      headers: {'Idempotency-Key': body.case_id + ':' + JSON.stringify(body).length}});
+    renderResult(d, body);
+    $('#result').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){ err.textContent = e.message; err.hidden = false; }
+  finally{ btn.disabled = false; btn.textContent = 'Get decision'; }
+};
 
-function renderResult(d){
-  const panel = $('#resultPanel'); panel.style.display = 'block';
-  const facts = Object.entries(d.facts).filter(([f, v]) => v !== 'unknown' || d.unread_facts.includes(f));
-  const cf = d.counterfactual || {};
-  panel.innerHTML = `
-    <div class="panel">
-      <div class="verdict">
-        <span class="verdict-action ${d.action}">${d.action}</span>
-        <span class="verdict-meta">confidence ${d.confidence} · extraction: ${esc(d.extraction_source)}${d.degraded_reason ? ' · <span style="color:var(--escalate)">degraded: ' + esc(d.degraded_reason) + '</span>' : ''}</span>
-      </div>
-      <div class="kv">
-        <div><div class="k">P(win)</div><div class="v">${(d.p_win*100).toFixed(0)}% ± ${(d.p_win_std*100).toFixed(0)}</div></div>
-        <div><div class="k">EV of contesting</div><div class="v">${inr(d.ev_contest_inr)}</div></div>
-        <div><div class="k">Value of a review</div><div class="v">${inr(d.review_value_inr)}</div></div>
-        <div><div class="k">Review cost</div><div class="v">${inr(d.review_cost_inr)}</div></div>
-      </div>
-      <ul class="reasons">${d.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
-      ${cf.note ? `<div class="memo">${esc(cf.note)}</div>` : ''}
-      <div class="inline-actions"><span class="report-p" style="margin:0">Record the network's outcome (feeds Insights):</span>
-        <button class="small" data-outcome="won">Won</button><button class="small" data-outcome="lost">Lost</button>
-        <span id="outcomeMsg" class="report-p" style="margin:0"></span></div>
-      <div class="footnote">evaluation #${d.evaluation_id} · model ${esc(d.model_version)} · ${d.llm_calls} LLM calls · ${d.llm_tokens} tokens · ${d.latency_ms} ms${d.idempotent_replay ? ' · idempotent replay' : ''}</div>
+function headline(d, body){
+  const amount = body.amount_inr, cost = d.contest_cost_inr;
+  if(d.action === 'CONTEST') return ['✓', 'Fight this dispute',
+    `Expected to win back about ${inr(d.ev_contest_inr)} after the ${inr(cost)} cost of fighting.`];
+  if(d.action === 'ESCALATE') return ['?', 'Ask a person to decide',
+    `The evidence is unclear. A person checking it is worth about ${inr(d.review_value_inr)} — more than the ${inr(d.review_cost_inr)} it costs.`];
+  if(body.response_deadline_days_left < 2) return ['✕', 'Accept the loss', `Only ${body.response_deadline_days_left} day(s) left — not enough time to put a response together.`];
+  if(amount <= cost) return ['✕', 'Accept the loss', `The amount (${inr(amount)}) is smaller than the cost of fighting (${inr(cost)}).`];
+  return ['✕', 'Accept the loss', `With a ${pct(d.p_win)} chance of winning, fighting (cost ${inr(cost)}) would lose us about ${inr(-d.ev_contest_inr)} on average.`];
+}
+const SURE = {HIGH:'Very sure', MEDIUM:'Fairly sure', LOW:'Unsure — needs a person'};
+
+function gauge(d, body){
+  const p = d.p_win, lo = clamp(p - 1.645 * d.p_win_std), hi = clamp(p + 1.645 * d.p_win_std);
+  const be = clamp(d.contest_cost_inr / body.amount_inr);
+  const beLabel = be >= 1 ? 'Never worth fighting (costs more than the amount)' : `Worth fighting above ${pct(be)}`;
+  return `<div class="gauge" role="img" aria-label="Chance of winning ${pct(p)}, likely between ${pct(lo)} and ${pct(hi)}; ${beLabel}">
+      <div class="track"><div class="lose" style="width:${be*100}%"></div><div class="win"></div></div>
+      <div class="band" style="left:${lo*100}%;width:${Math.max(.6,(hi-lo)*100)}%" data-tip="Likely range: ${pct(lo)} to ${pct(hi)} (90% sure the true chance is in here)"></div>
+      <div class="be" style="left:${be*100}%"></div><div class="be-l" style="left:${clamp(be,.12,.88)*100}%">${beLabel}</div>
+      <div class="mark" style="left:${p*100}%" data-tip="Best estimate: ${pct(p)} chance of winning"></div>
+      <div class="p-l" style="left:${clamp(p,.06,.94)*100}%">${pct(p)} chance to win</div>
+      <span class="ax" style="left:0">0%</span><span class="ax" style="right:0">100%</span>
     </div>
-    <div class="panel">
-      <h2>Extracted facts</h2>
-      ${facts.length ? `<table><thead><tr><th>fact</th><th>value</th><th>sample agreement</th><th>log-odds contribution</th></tr></thead><tbody>
-        ${facts.map(([f, v]) => `<tr><td>${f}${d.unread_facts.includes(f) ? ' <span class="badge ESCALATE">unread → imputed</span>' : ''}</td>
-          <td class="fact-${v}">${v}</td><td>${Math.round((d.fact_agreement[f] ?? 1)*100)}%</td>
-          <td>${(d.contributions[f + '=' + v] ?? '') === '' ? '—' : d.contributions[f + '=' + v].toFixed(2)}</td></tr>`).join('')}
-      </tbody></table>` : '<div class="empty">No facts could be established from these documents.</div>'}
-    </div>
-    ${(cf.options || []).length ? `<div class="panel">
-      <h2>What would flip this to CONTEST — ranked by expected-value gain</h2>
-      <table><thead><tr><th>evidence</th><th>what it takes</th><th>P(win) after</th><th>EV gain</th></tr></thead><tbody>
-        ${cf.options.map(o => `<tr><td>${o.evidence.map(esc).join(' + ')}</td>
-          <td>${o.evidence.map(f => ({missing: 'collect it', unread: 'probably already in the documents — confirm',
-                adverse: 'documents say no — fix the process'})[o.kinds[f]]).join('; ')}</td>
-          <td>${(o.p_win_after*100).toFixed(0)}%</td><td>+${inr(o.ev_gain_inr)}</td></tr>`).join('')}
-      </tbody></table></div>` : ''}
-    <div class="panel">
-      <h2>Audit trail</h2>
-      <ul class="auditlog">${(d.audit_log || []).map(line => `<li>${esc(line)}</li>`).join('')}</ul>
-    </div>`;
-  panel.querySelectorAll('[data-outcome]').forEach(b => b.addEventListener('click', async () => {
-    try{ await api(`/v1/disputes/${encodeURIComponent(d.case_id)}/outcome`, {method:'POST', body: JSON.stringify({outcome: b.dataset.outcome})});
-      $('#outcomeMsg').textContent = 'Recorded.'; }
-    catch(e){ $('#outcomeMsg').textContent = e.message; }
-  }));
+    <div class="legend"><span><i style="background:var(--band)"></i>Likely range</span>
+      <span><i style="background:var(--marker);border-radius:50%"></i>Best estimate</span>
+      <span><i style="background:var(--bad-soft);border:1px solid var(--border)"></i>Not worth fighting</span>
+      <span><i style="background:var(--good-soft);border:1px solid var(--border)"></i>Worth fighting</span></div>`;
 }
 
-// ---------- review queue ----------
-$('#btnLoadEsc').addEventListener('click', loadQueue);
+function factCards(d){
+  const shown = Object.entries(d.facts).filter(([f, v]) => v !== 'unknown' || d.unread_facts.includes(f));
+  if(!shown.length) return '<p class="muted">Nothing could be confirmed from these documents.</p>';
+  return '<div class="facts">' + shown.map(([f, v]) => {
+    const unread = d.unread_facts.includes(f);
+    const kind = unread ? 'unread' : v;
+    const [ic, word] = {yes:['✓','Yes'], no:['✕','No'], unknown:['–','Not in the documents'], unread:['!','Could not read — estimated']}[kind];
+    const agree = d.fact_agreement[f];
+    const agreeTxt = !unread && agree != null && agree < 1 ? ` · ${Math.round(agree*3)} of 3 AI reads agreed` : '';
+    return `<div class="fact ${kind}"><div class="ic">${ic}</div><div><div class="n">${esc(factName(f))}</div>
+      <div class="s"><b>${word}</b>${agreeTxt}</div></div></div>`;
+  }).join('') + '</div>';
+}
+
+function checklist(d){
+  const opts = (d.counterfactual || {}).options || [];
+  if(!opts.length) return '';
+  const how = {missing:['missing','Collect it'], unread:['unread','Probably already in your documents — confirm it'], adverse:['adverse','Your records say no — this needs a process fix']};
+  return `<div class="card"><h2>What would change this to “Fight it”</h2>
+    <p class="sub">Ranked by how much it would add. Each item on its own is enough unless shown together.</p>
+    ${opts.map(o => `<div class="todo"><div>
+        <div class="what">${o.evidence.map(f => esc(o.kinds[f] === 'adverse' ? factName(f) : (FACT[f] || [f, f])[1])).join(' + ')}</div>
+        <div class="how">${o.evidence.map(f => `<span class="tag ${how[o.kinds[f]][0]}">${how[o.kinds[f]][1]}</span>`).join(' ')}</div></div>
+        <div><div class="gain">+${inr(o.ev_gain_inr)}</div><div class="after">win chance → ${pct(o.p_win_after)}</div></div></div>`).join('')}</div>`;
+}
+
+function renderResult(d, body){
+  const [ic, verdict, why] = headline(d, body);
+  const degraded = d.degraded_reason ? `<p class="error" style="margin:10px 0 0">The AI could not finish (${esc(d.degraded_reason)}), so this used rules only and is more cautious than usual.</p>` : '';
+  $('#result').innerHTML = `
+    <div class="hero ${d.action}"><div class="icon" aria-hidden="true">${ic}</div>
+      <div><div class="verdict">${verdict}</div><div class="why">${why}</div>${degraded}</div>
+      <div class="sure">${SURE[d.confidence] || d.confidence}</div></div>
+
+    <div class="card"><h2>How likely are we to win?</h2>
+      <p class="sub">The dot is the best estimate. The shaded bar is how sure we are. The line is where fighting starts to pay off.</p>
+      ${gauge(d, body)}
+      <div class="grid3" style="margin-top:22px">
+        <div class="tile"><div class="k">Expected result if we fight</div><div class="v num ${d.ev_contest_inr > 0 ? 'good' : 'bad'}">${inr(d.ev_contest_inr)}</div><div class="d">after ${inr(d.contest_cost_inr)} cost of fighting</div></div>
+        <div class="tile"><div class="k">Value of a person checking</div><div class="v num">${inr(d.review_value_inr)}</div><div class="d">how much a review could improve the outcome</div></div>
+        <div class="tile"><div class="k">Cost of a person checking</div><div class="v num">${inr(d.review_cost_inr)}</div><div class="d">${d.review_value_inr > d.review_cost_inr ? 'worth it — sent to a person' : 'not worth it — decided automatically'}</div></div>
+      </div></div>
+
+    <div class="card"><h2>What the evidence shows</h2>
+      <p class="sub">${d.extraction_source.startsWith('cascade') || d.extraction_source === 'llm' ? 'Read by rules and the AI. Every AI answer had to quote the documents word for word.' : 'Read by rules.'}</p>
+      ${factCards(d)}</div>
+
+    ${checklist(d)}
+
+    <div class="card">
+      <h2>Record the final result</h2><p class="sub">When the card network decides, record it here. It feeds the Insights page.</p>
+      <div class="chips-row"><button class="btn-2" data-outcome="won">✓ We won</button><button class="btn-2" data-outcome="lost">✕ We lost</button>
+        <span id="outcomeMsg" class="muted" style="align-self:center"></span></div>
+      <details class="more" style="margin-top:16px"><summary>How this decision was made (step by step)</summary>
+        <ol class="steps">${(d.audit_log || []).map(s => `<li>${esc(s)}</li>`).join('')}</ol></details>
+      <div class="foot">case ${esc(d.case_id)} · evaluation #${d.evaluation_id} · model ${esc(d.model_version)} · ${d.llm_calls} AI calls · ${d.latency_ms} ms${d.idempotent_replay ? ' · repeated request, same answer returned' : ''}</div>
+    </div>`;
+  document.querySelectorAll('[data-outcome]').forEach(b => b.onclick = async () => {
+    try{ await api(`/v1/disputes/${encodeURIComponent(d.case_id)}/outcome`, {method:'POST', body: JSON.stringify({outcome: b.dataset.outcome})});
+      $('#outcomeMsg').textContent = 'Saved.'; }catch(e){ $('#outcomeMsg').textContent = e.message; }
+  });
+}
+
+// ---------- needs a person ----------
+$('#btnQueue').onclick = loadQueue;
 async function loadQueue(){
-  const out = $('#escTable'); out.innerHTML = '<div class="empty">Loading…</div>';
+  const out = $('#queue'); out.innerHTML = '<p class="muted">Loading…</p>';
   try{
     const page = await api('/v1/escalations?limit=50');
-    if(!page.items.length){
-      out.innerHTML = `<div class="empty"><div class="empty-title">Nothing is waiting on a human</div>
-        Try the "Fraud case, unfamiliar auth record" example on the Evaluate tab with no LLM configured.</div>`;
+    if(!page.items.length){ out.innerHTML = `<div class="card empty"><div class="big">Nothing needs a person right now</div>
+      Every dispute so far was clear enough to decide automatically.</div>`; return; }
+    out.innerHTML = page.items.map((r, i) => {
+      const lo = clamp(r.p_win - 1.645 * r.p_win_std), hi = clamp(r.p_win + 1.645 * r.p_win_std);
+      return `<div class="card"><div class="qcard"><div class="rank" aria-label="Priority ${r.rank}">${r.rank}</div>
+        <div><div style="font-weight:650">${inr(r.amount_inr)} dispute <span class="muted" style="font-weight:400">· ${esc(r.case_id)}</span></div>
+          <div class="mini" data-tip="Chance of winning ${pct(r.p_win)}, likely ${pct(lo)}–${pct(hi)}">
+            <div class="b" style="left:${lo*100}%;width:${Math.max(1,(hi-lo)*100)}%"></div><div class="m" style="left:${r.p_win*100}%"></div></div>
+          <div class="muted" style="font-size:13px">Win chance ${pct(r.p_win)} (likely ${pct(lo)}–${pct(hi)}) · a person's check is worth <b style="color:var(--ink)">${inr(r.net_review_value_inr)}</b> more than it costs</div></div>
+        <button class="btn-2" data-open="${i}" aria-expanded="false">Review</button></div>
+        <div data-panel="${i}" hidden style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+          <ul style="margin:0 0 12px;padding-left:18px;color:var(--ink-2);font-size:13.5px">${r.reasons.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+          <div class="chips-row"><input type="text" placeholder="Your name" data-who="${i}" style="width:200px" aria-label="Reviewer name">
+            <button class="btn-2" data-act="CONTEST" data-i="${i}" data-case="${esc(r.case_id)}">✓ Fight it</button>
+            <button class="btn-2" data-act="CONCEDE" data-i="${i}" data-case="${esc(r.case_id)}">✕ Accept the loss</button></div></div></div>`;
+    }).join('') + `<p class="muted" style="font-size:13px">${page.total} waiting · ordered by how much a person's check is worth.</p>`;
+    out.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+      const p = out.querySelector(`[data-panel="${b.dataset.open}"]`); p.hidden = !p.hidden; b.setAttribute('aria-expanded', String(!p.hidden)); });
+    out.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+      const who = out.querySelector(`[data-who="${b.dataset.i}"]`).value.trim() || 'analyst';
+      try{ await api(`/v1/disputes/${encodeURIComponent(b.dataset.case)}/review`, {method:'POST', body: JSON.stringify({reviewer: who, action: b.dataset.act})}); loadQueue(); }
+      catch(e){ alert(e.message); }
+    });
+  }catch(e){ out.innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+}
+
+// ---------- insights ----------
+$('#btnInsights').onclick = loadInsights; $('#scope').onchange = loadInsights;
+const VERDICT = {
+  'merchant-specific': ['specific', '● Problem at this merchant'],
+  'systemic': ['systemic', '▲ Business-wide problem'],
+  'worth watching': ['watch', '◌ Worth watching'],
+  'in line with portfolio': ['normal', 'Normal'],
+};
+const badge = c => { const [cls, txt] = VERDICT[c] || ['normal', c]; return `<span class="badge ${cls}">${txt}</span>`; };
+
+function pairBars(a, aLabel, b, bLabel, aCls = 's1', bCls = 'rest'){
+  return `<div class="pair">
+    <div class="r"><div class="t seg ${aCls}" style="width:${Math.max(2, a*120)}px" data-tip="${aLabel}: ${pct(a)}"></div>${pct(a)} ${aLabel}</div>
+    <div class="r"><div class="t seg ${bCls}" style="width:${Math.max(2, b*120)}px" data-tip="${bLabel}: ${pct(b)}"></div>${pct(b)} ${bLabel}</div></div>`;
+}
+
+function kpis(rc, calib, econ){
+  const lossRate = rc.resolved ? rc.lost / rc.resolved : null;
+  let cal;
+  if(calib.n < 50) cal = `<div class="v num">${calib.n}/50</div><div class="d">results needed before checking the predictions</div>`;
+  else if(!calib.alert) cal = `<div class="v good">✓ On target</div><div class="d">predictions are off by ${pct(calib.ece, 1)} on average</div>`;
+  else cal = `<div class="v bad">! Drifting</div><div class="d">off by ${pct(calib.ece, 1)} — retrain the model</div>`;
+  return `<div class="grid4" style="margin-bottom:16px">
+    <div class="tile"><div class="k">Disputes with a final result</div><div class="v num">${rc.resolved.toLocaleString('en-IN')}</div><div class="d">${rc.lost} lost</div></div>
+    <div class="tile"><div class="k">Loss rate</div><div class="v num">${pct(lossRate)}</div><div class="d">of all resolved disputes</div></div>
+    <div class="tile"><div class="k">Recovered by fighting</div><div class="v num ${econ.net_recovered_inr >= 0 ? 'good' : 'bad'}">${inr(econ.net_recovered_inr)}</div><div class="d">${econ.contested} fought · ${econ.won} won, after costs</div></div>
+    <div class="tile"><div class="k">Are the predictions right?</div>${cal}</div></div>`;
+}
+
+function whyLost(rc){
+  const miss = Object.fromEntries(rc.top_missing), adv = Object.fromEntries(rc.top_adverse);
+  const facts = [...new Set([...Object.keys(miss), ...Object.keys(adv)])].sort((a, b) => ((miss[b]||0)+(adv[b]||0)) - ((miss[a]||0)+(adv[a]||0)));
+  if(!facts.length) return '';
+  const max = Math.max(...facts.map(f => (miss[f]||0) + (adv[f]||0)));
+  return `<div class="card"><h2>What evidence was weak in lost disputes</h2>
+    <p class="sub"><b>Missing</b> means no document covered it — go and collect it. <b>Said no</b> means the documents went against us — fix the process.</p>
+    <div class="legend" style="margin-bottom:12px"><span><i style="background:var(--accent)"></i>Missing</span><span><i style="background:var(--series-2)"></i>Said no</span></div>
+    <div class="bars">${facts.map(f => { const m = miss[f]||0, a = adv[f]||0; return `<div class="bar-row"><div class="lbl">${esc(factName(f))}</div>
+      <div style="display:flex;align-items:center"><div class="bar-track" style="width:${(m + a) / max * 70}%">
+        ${m ? `<div class="seg s1" style="flex:${m}" data-tip="${esc(factName(f))}: missing in ${m} lost disputes"></div>` : ''}
+        ${a ? `<div class="seg s2" style="flex:${a}" data-tip="${esc(factName(f))}: documents said no in ${a} lost disputes"></div>` : ''}
+      </div><span class="bar-val num">${m} missing · ${a} said no</span></div></div>`; }).join('')}</div></div>`;
+}
+
+function systemicCards(w){
+  if(!w.systemic.length) return `<div class="card"><h2>Business-wide problems</h2><p class="muted" style="margin:0">None found — no gap is shared by enough merchants to be a business-wide problem.</p></div>`;
+  return `<div class="card"><h2>Business-wide problems</h2><p class="sub">The same evidence is missing at many merchants, and it is costing us disputes. Fix it once, centrally.</p>` +
+    w.systemic.map(f => { const v = w.facts[f]; return `<div class="callout"><div class="ttl">▲ ${esc((FACT[f] || [f, f])[1])} is usually missing</div>
+      <div style="color:var(--ink-2);font-size:14px;margin-bottom:10px">Missing in ${pct(v.missing_rate)} of disputes, at ${v.merchants_affected.length} different merchants.</div>
+      ${pairBars(v.loss_rate_when_missing, 'lost when it is missing', v.loss_rate_when_present, 'lost when we have it', 'lost-hi', 'lost-lo')}</div>`; }).join('') + '</div>';
+}
+
+function merchantTable(w){
+  const rows = Object.entries(w.merchants).filter(([, m]) => m.losses > 0);
+  if(!rows.length) return '';
+  return `<div class="card"><h2>Each merchant's main weakness</h2>
+    <p class="sub">Compared with every other merchant, so we can tell a merchant's own problem from a business-wide one.</p>
+    <div class="scroll"><table><thead><tr><th>Merchant</th><th>Lost</th><th>Main weakness</th><th>Weak in…</th><th>What it means</th></tr></thead><tbody>
+    ${rows.map(([id, m]) => { const p = m.primary_weakness; return `<tr><td><b>${esc(mName(id))}</b></td><td class="num">${m.losses}</td>
+      <td>${esc(factName(p.fact))}</td><td>${pairBars(p.weak_rate, 'this merchant', p.rest_of_portfolio_rate ?? 0, 'others')}</td>
+      <td>${badge(m.classification)}${(m.worth_watching || []).filter(x => x.fact !== p.fact).slice(0, 2).map(x =>
+        `<div style="margin-top:6px">${badge('worth watching')} <span class="muted" style="font-size:12px">${esc(factName(x.fact))}</span></div>`).join('')}</td></tr>`; }).join('')}
+    </tbody></table></div></div>`;
+}
+
+function merchantFocus(id, m, w){
+  if(!m || !m.losses) return `<div class="card empty"><div class="big">${esc(mName(id))} has no lost disputes yet</div>Nothing to diagnose.</div>`;
+  const p = m.primary_weakness;
+  const meaning = {
+    'merchant-specific': `This is <b>this merchant's own problem</b> — far worse than at other merchants, and very unlikely to be chance.`,
+    'systemic': `This is the <b>business-wide problem</b> — it affects most merchants, not just this one.`,
+    'worth watching': `It looks worse here than elsewhere, but there is <b>not enough data yet</b> to be sure. Keep an eye on it.`,
+    'in line with portfolio': `This is about the same as at other merchants — nothing unusual.`,
+  }[m.classification];
+  const watch = (m.worth_watching || []).filter(x => x.fact !== p.fact);
+  return `<div class="card"><h2>${esc(mName(id))}: main weakness</h2>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;margin:10px 0">
+      <div style="flex:1;min-width:260px"><div style="font-size:20px;font-weight:700">${esc(factName(p.fact))}</div>
+        <div style="color:var(--ink-2)">Weak in <b>${p.weak_in_losses} of ${p.relevant_losses}</b> lost disputes where it mattered.</div>
+        <div style="margin-top:8px">${badge(m.classification)}</div><p style="color:var(--ink-2);margin:10px 0 0">${meaning}</p></div>
+      ${pairBars(p.weak_rate, 'of this merchant’s disputes', p.rest_of_portfolio_rate ?? 0, 'at other merchants')}</div>
+    ${watch.length ? `<p class="sub" style="margin-top:14px">Also worth watching: ${watch.map(x => esc(factName(x.fact))).join(', ')}.</p>` : ''}</div>`;
+}
+
+async function loadInsights(){
+  const out = $('#insights'), scope = $('#scope').value;
+  out.innerHTML = '<p class="muted">Loading…</p>';
+  try{
+    const all = await api('/v1/reports/portfolio');
+    const view = scope ? await api(`/v1/reports/merchants/${scope}`) : all;
+    if(!view.root_causes.resolved){
+      out.innerHTML = `<div class="card empty"><div class="big">No final results yet</div>
+        Insights need disputes whose outcome (won or lost) has been recorded. Record outcomes on the
+        “Check a dispute” page, or load the demo portfolio into this database:<br><code class="cmd">python scripts/seed_demo.py</code></div>`;
       return;
     }
-    out.innerHTML = `<table><thead><tr><th>#</th><th>case</th><th>amount</th><th>P(win)</th><th>net review value</th></tr></thead><tbody>
-      ${page.items.map((r, i) => `
-        <tr class="esc-row" data-i="${i}" tabindex="0" role="button" aria-expanded="false" aria-label="Review ${esc(r.case_id)}"><td>${r.rank}</td><td>${esc(r.case_id)}</td><td>${inr(r.amount_inr)}</td>
-          <td>${(r.p_win*100).toFixed(0)}% ± ${(r.p_win_std*100).toFixed(0)}</td><td>${inr(r.net_review_value_inr)}</td></tr>
-        <tr class="esc-detail" data-i="${i}" style="display:none"><td colspan="5">
-          ${r.reasons.map(x => '• ' + esc(x)).join('<br>')}
-          <div class="inline-actions"><input type="text" placeholder="reviewer" data-reviewer="${i}" aria-label="Reviewer name">
-            <button class="small" data-review="CONTEST" data-case="${esc(r.case_id)}" data-i="${i}">Contest</button>
-            <button class="small" data-review="CONCEDE" data-case="${esc(r.case_id)}" data-i="${i}">Concede</button></div>
-        </td></tr>`).join('')}
-      </tbody></table><div class="esc-hint">${page.total} open · click a row to review it.</div>`;
-    out.querySelectorAll('.esc-row').forEach(row => {
-      const toggle = () => {
-        const det = out.querySelector(`.esc-detail[data-i="${row.dataset.i}"]`);
-        const open = det.style.display === 'none';
-        det.style.display = open ? '' : 'none';
-        row.setAttribute('aria-expanded', String(open));
-      };
-      row.addEventListener('click', toggle);
-      row.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); } });
-    });
-    out.querySelectorAll('[data-review]').forEach(b => b.addEventListener('click', async () => {
-      const reviewer = out.querySelector(`[data-reviewer="${b.dataset.i}"]`).value.trim() || 'analyst';
-      try{ await api(`/v1/disputes/${encodeURIComponent(b.dataset.case)}/review`, {method:'POST',
-             body: JSON.stringify({reviewer, action: b.dataset.review})}); loadQueue(); }
-      catch(e){ alert(e.message); }
-    }));
-  }catch(e){ out.innerHTML = `<div class="error">Error: ${esc(e.message)}</div>`; }
+    out.innerHTML = kpis(view.root_causes, view.calibration, view.economics)
+      + (scope ? merchantFocus(scope, all.weaknesses.merchants[scope], all.weaknesses) : systemicCards(all.weaknesses) + merchantTable(all.weaknesses))
+      + whyLost(view.root_causes)
+      + (view.root_causes.resolved < 30 ? `<p class="muted" style="font-size:13px">Only ${view.root_causes.resolved} results so far — patterns become reliable after a few hundred.</p>` : '');
+  }catch(e){ out.innerHTML = `<p class="error">${esc(e.message)}</p>`; }
 }
-
-// ---------- insights (renders the small markdown subset the backend emits) ----------
-function renderInline(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>'); }
-function renderTable(rows){
-  const cells = rows.filter(r => !/^\|[\s:|-]+\|$/.test(r)).map(r => r.replace(/^\||\|$/g,'').split('|').map(c => c.trim()));
-  const [head, ...body] = cells;
-  return '<table class="report-table"><thead><tr>' + head.map(h => `<th>${renderInline(h)}</th>`).join('') + '</tr></thead><tbody>' +
-    body.map(r => '<tr>' + r.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
-}
-function renderMarkdown(md){
-  const lines = md.split('\n'); let html = '', i = 0;
-  while(i < lines.length){
-    const line = lines[i];
-    if(/^\s*\|/.test(line)){ const t = []; while(i < lines.length && /^\s*\|/.test(lines[i])) t.push(lines[i++].trim()); html += renderTable(t); continue; }
-    const h = line.match(/^(#{1,3})\s+(.*)$/);
-    if(h){ html += `<div class="report-h${h[1].length}">${renderInline(h[2])}</div>`; i++; continue; }
-    if(/^\s*-\s+/.test(line)){ const items = []; while(i < lines.length && /^\s*-\s+/.test(lines[i])) items.push(lines[i++].replace(/^\s*-\s+/,''));
-      html += '<ul class="report-list">' + items.map(x => `<li>${renderInline(x)}</li>`).join('') + '</ul>'; continue; }
-    if(line.trim()) html += `<p class="report-p">${renderInline(line)}</p>`;
-    i++;
-  }
-  return html;
-}
-$('#btnLoadReport').addEventListener('click', async () => {
-  const scope = $('#reportScope').value, out = $('#reportOut');
-  out.innerHTML = '<p class="report-p">Loading…</p>';
-  try{
-    const d = await api(scope === 'portfolio' ? '/v1/reports/portfolio' : `/v1/reports/merchants/${scope}`);
-    out.innerHTML = renderMarkdown(d.markdown);
-  }catch(e){ out.innerHTML = `<p class="error">Error: ${esc(e.message)}</p>`; }
-});
 </script>
-
 </body>
 </html>

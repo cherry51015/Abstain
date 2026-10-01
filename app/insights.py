@@ -35,7 +35,7 @@ ECE_ALERT = 0.10
 MIN_CASES_FOR_ALERT = 50
 MIN_CASES = 8               # disputes on a fact before a merchant rate is trusted
 MIN_GAP_DIFF = 0.15         # merchant-specific: this much above the rest of the portfolio ...
-Z_CRIT = 1.96               # ... at ~95% confidence
+FDR = 0.05                  # ... and significant after Benjamini-Hochberg across every merchant x fact test
 MIN_CASES_SYSTEMIC = 5
 SYSTEMIC_MERCHANTS = 3      # systemic: missing in most disputes of at least this many merchants ...
 MIN_LOSS_LIFT = 0.15        # ... and missing it raises the loss rate by at least this much
@@ -98,8 +98,16 @@ def weaknesses(rows: list[Resolved], catalog: Catalog) -> dict:
 
       merchant-specific  the fact is weak (missing or adverse) in a clearly
                          larger share of this merchant's disputes than of the
-                         rest of the portfolio's: difference >= MIN_GAP_DIFF
-                         and two-proportion z >= Z_CRIT, n >= MIN_CASES
+                         rest of the portfolio's: difference >= MIN_GAP_DIFF,
+                         n >= MIN_CASES, and a one-sided two-proportion z-test
+                         that survives Benjamini-Hochberg at FDR across *all*
+                         merchant x fact tests. (8 merchants x 9 facts is ~70
+                         tests; at a plain 5% threshold a few would be flagged
+                         by chance alone, which is exactly what happened before
+                         the correction was added.)
+      worth watching     the same direction and size of gap, but not yet enough
+                         evidence (too few disputes or not significant after
+                         correction). Shown, never acted on automatically.
       systemic           the fact is *missing* in most disputes of at least
                          SYSTEMIC_MERCHANTS separate merchants AND missing it
                          measurably costs wins (loss rate when missing exceeds
@@ -133,7 +141,7 @@ def weaknesses(rows: list[Resolved], catalog: Catalog) -> dict:
         n = o[(value, True)] + o[(value, False)]
         return (o[(value, True)] / n if n else None), n
 
-    facts, per_merchant = {}, defaultdict(list)
+    facts, per_merchant, tests = {}, defaultdict(list), []
     for fact, by_m in stats.items():
         W = sum(c["weak"] for c in by_m.values())
         N = sum(c["n"] for c in by_m.values())
@@ -151,27 +159,42 @@ def weaknesses(rows: list[Resolved], catalog: Catalog) -> dict:
             rest_w, rest_n = W - c["weak"], N - c["n"]
             rate, rest_rate = c["weak"] / c["n"], (rest_w / rest_n if rest_n else None)
             z = _two_proportion_z(c["weak"], c["n"], rest_w, rest_n)
-            specific = (c["n"] >= MIN_CASES and rest_rate is not None
-                        and rate - rest_rate >= MIN_GAP_DIFF and z >= Z_CRIT)
-            per_merchant[m].append({
+            big_gap = rest_rate is not None and rate - rest_rate >= MIN_GAP_DIFF
+            item = {
                 "fact": fact, "disputes": c["n"], "weak_rate": round(rate, 3),
                 "rest_of_portfolio_rate": None if rest_rate is None else round(rest_rate, 3), "z": round(z, 2),
+                "p_value": round(0.5 * math.erfc(z / math.sqrt(2)), 5),   # one-sided: merchant worse than the rest
                 "weak_in_losses": c["weak_in_losses"], "relevant_losses": c["losses"],
-                "merchant_specific": specific, "systemic": systemic,
-            })
+                "merchant_specific": False, "watch": big_gap, "systemic": systemic,
+            }
+            per_merchant[m].append(item)
+            if c["n"] >= MIN_CASES and rest_rate is not None:
+                tests.append(item)
+
+    # Benjamini-Hochberg: the largest k with p_(k) <= k/m * FDR; the k smallest p-values are discoveries.
+    tests.sort(key=lambda x: x["p_value"])
+    cutoff = max((k for k, t in enumerate(tests, 1) if t["p_value"] <= k / len(tests) * FDR), default=0)
+    for t in tests[:cutoff]:
+        if t["watch"]:
+            t["merchant_specific"], t["watch"] = True, False
 
     merchants = {}
     for m, items in per_merchant.items():
         specific = sorted((x for x in items if x["merchant_specific"]),
                           key=lambda x: -(x["weak_rate"] - x["rest_of_portfolio_rate"]))
         systemic_items = [x for x in items if x["systemic"]]
-        primary = (specific or systemic_items or sorted(items, key=lambda x: (-x["weak_in_losses"], -x["weak_rate"])))[0]
+        watch = sorted((x for x in items if x["watch"] and not x["systemic"]),
+                       key=lambda x: -(x["weak_rate"] - x["rest_of_portfolio_rate"]))
+        primary = (specific or systemic_items or watch
+                   or sorted(items, key=lambda x: (-x["weak_in_losses"], -x["weak_rate"])))[0]
         merchants[m] = {
             "losses": losses_by_merchant[m],
             "primary_weakness": primary,
             "classification": ("merchant-specific" if primary["merchant_specific"]
-                               else "systemic" if primary["systemic"] else "in line with portfolio"),
+                               else "systemic" if primary["systemic"]
+                               else "worth watching" if primary["watch"] else "in line with portfolio"),
             "merchant_specific_weaknesses": specific,
+            "worth_watching": watch,
         }
     return {"facts": facts, "systemic": sorted(f for f, v in facts.items() if v["systemic"]),
             "merchants": dict(sorted(merchants.items()))}
@@ -238,6 +261,8 @@ def _render_weaknesses(weak: dict, merchant_id: str | None) -> list[str]:
           "| merchant | losses | primary weakness | weak in (this merchant) | rest of portfolio | in losses | verdict |",
           "|---|---|---|---|---|---|---|"]
     for mid, m in weak["merchants"].items():
+        if not m["losses"]:
+            continue  # nothing lost yet, so nothing to diagnose
         p = m["primary_weakness"]
         L.append(f"| {mid} | {m['losses']} | `{p['fact']}` | {_pct(p['weak_rate'])} of {p['disputes']} | "
                  f"{_pct(p['rest_of_portfolio_rate'])} | {p['weak_in_losses']}/{p['relevant_losses']} | {m['classification']} |")
@@ -253,6 +278,8 @@ def render_markdown(title: str, causes: dict, calib: dict, econ: dict, weak: dic
           "*Missing* = no document covered the fact (collect it). *Adverse* = the document says no (fix operations).", "",
           "| fact | missing in losses | adverse in losses |", "|---|---|---|"]
     facts = {f for f, _ in causes["top_missing"]} | {f for f, _ in causes["top_adverse"]}
+    if not facts:
+        L[-2:] = ["- No lost disputes yet."]
     miss, adv = dict(causes["top_missing"]), dict(causes["top_adverse"])
     for f in sorted(facts, key=lambda f: -(miss.get(f, 0) + adv.get(f, 0))):
         L.append(f"| `{f}` | {miss.get(f, 0)} | {adv.get(f, 0)} |")
